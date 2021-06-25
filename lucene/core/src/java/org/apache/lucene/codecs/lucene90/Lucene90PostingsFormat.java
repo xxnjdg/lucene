@@ -373,7 +373,9 @@ public final class Lucene90PostingsFormat extends PostingsFormat {
   static final int VERSION_START = 0;
   static final int VERSION_CURRENT = VERSION_START;
 
+  //Lucene90BlockTreeTermsWriter.DEFAULT_MIN_BLOCK_SIZE
   private final int minTermBlockSize;
+  //Lucene90BlockTreeTermsWriter.DEFAULT_MAX_BLOCK_SIZE
   private final int maxTermBlockSize;
 
   /** Creates {@code Lucene90PostingsFormat} with default settings. */
@@ -461,6 +463,7 @@ public final class Lucene90PostingsFormat extends PostingsFormat {
      * docid when there is a single pulsed posting, otherwise -1. freq is always implicitly
      * totalTermFreq in this case.
      */
+    //表示term域值是否只在一个文档存在。如果是记录该文档号，如果有多个文档出现了，记录为-1
     public int singletonDocID;
 
     /** Sole constructor. */

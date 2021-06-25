@@ -74,10 +74,12 @@ public class ConcurrentMergeScheduler extends MergeScheduler {
   // ones run, up until maxMergeCount merges at which point
   // we forcefully pause incoming threads (that presumably
   // are the ones causing so much merging).
+  //4
   private int maxThreadCount = AUTO_DETECT_MERGES_AND_THREADS;
 
   // Max number of merges we accept before forcefully
   // throttling the incoming threads
+  //9
   private int maxMergeCount = AUTO_DETECT_MERGES_AND_THREADS;
 
   /** How many {@link MergeThread}s have kicked off (this is use to name them). */

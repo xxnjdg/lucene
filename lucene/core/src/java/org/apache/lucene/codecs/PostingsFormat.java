@@ -64,6 +64,7 @@ public abstract class PostingsFormat implements NamedSPILoader.NamedSPI {
   public static final PostingsFormat[] EMPTY = new PostingsFormat[0];
 
   /** Unique name that's used to retrieve this format when reading the index. */
+  //Lucene90
   private final String name;
 
   /**

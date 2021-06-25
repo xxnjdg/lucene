@@ -40,6 +40,7 @@ public class TermQuery extends Query {
 
   final class TermWeight extends Weight {
     private final Similarity similarity;
+    //BM25Scorer
     private final Similarity.SimScorer simScorer;
     private final TermStates termStates;
     private final ScoreMode scoreMode;
@@ -104,6 +105,7 @@ public class TermQuery extends Query {
           : "The top-reader used to create Weight is not the same as the current reader's top-reader ("
               + ReaderUtil.getTopLevelContext(context);
       ;
+      //获取 TermsEnum
       final TermsEnum termsEnum = getTermsEnum(context);
       if (termsEnum == null) {
         return null;

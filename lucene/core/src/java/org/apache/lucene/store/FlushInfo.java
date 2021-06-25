@@ -22,6 +22,7 @@ package org.apache.lucene.store;
  */
 public class FlushInfo {
 
+  //2
   public final int numDocs;
 
   public final long estimatedSegmentSize;

@@ -38,6 +38,7 @@ public class PackedTokenAttributeImpl extends CharTermAttributeImpl
         OffsetAttribute,
         TermFrequencyAttribute {
 
+  //doc value 起始长度 和 结束长度
   private int startOffset, endOffset;
   private String type = DEFAULT_TYPE;
   private int positionIncrement = 1;

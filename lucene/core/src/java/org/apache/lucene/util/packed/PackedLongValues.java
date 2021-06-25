@@ -74,8 +74,10 @@ public class PackedLongValues extends LongValues implements Accountable {
     return monotonicBuilder(DEFAULT_PAGE_SIZE, acceptableOverheadRatio);
   }
 
+  //PackedInts.NullReader(numValues);
   final PackedInts.Reader[] values;
   final int pageShift, pageMask;
+  //2
   private final long size;
   private final long ramBytesUsed;
 
@@ -173,7 +175,9 @@ public class PackedLongValues extends LongValues implements Accountable {
 
     final int pageShift, pageMask;
     final float acceptableOverheadRatio;
+    //存域值长度，等于term个数
     long[] pending;
+    //长度
     long size;
 
     PackedInts.Reader[] values;

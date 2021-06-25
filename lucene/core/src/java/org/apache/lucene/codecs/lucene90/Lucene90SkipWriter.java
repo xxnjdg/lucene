@@ -108,6 +108,7 @@ final class Lucene90SkipWriter extends MultiLevelSkipListWriter {
   // this is the vast majority of terms (worst case: ID field or similar).  so in resetSkip() we
   // save
   // away the previous pointers, and lazy-init only if we need to buffer skip data for the term.
+  //true
   private boolean initialized;
   long lastDocFP;
   long lastPosFP;

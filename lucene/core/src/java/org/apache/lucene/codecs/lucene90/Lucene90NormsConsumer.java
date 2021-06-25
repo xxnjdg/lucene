@@ -32,6 +32,7 @@ import org.apache.lucene.util.IOUtils;
 
 /** Writer for {@link Lucene90NormsFormat} */
 final class Lucene90NormsConsumer extends NormsConsumer {
+  //data = nvd meta = nvm
   IndexOutput data, meta;
   final int maxDoc;
 
@@ -89,12 +90,15 @@ final class Lucene90NormsConsumer extends NormsConsumer {
 
   @Override
   public void addNormsField(FieldInfo field, NormsProducer normsProducer) throws IOException {
+    //BufferedNorms
     NumericDocValues values = normsProducer.getNorms(field);
+    //文档总数
     int numDocsWithValue = 0;
     long min = Long.MAX_VALUE;
     long max = Long.MIN_VALUE;
     for (int doc = values.nextDoc(); doc != DocIdSetIterator.NO_MORE_DOCS; doc = values.nextDoc()) {
       numDocsWithValue++;
+      //v = 域名的域值长度norm，一般等于term个数，有多少个就多长
       long v = values.longValue();
       min = Math.min(min, v);
       max = Math.max(max, v);

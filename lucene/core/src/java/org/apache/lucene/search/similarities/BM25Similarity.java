@@ -31,8 +31,11 @@ import org.apache.lucene.util.SmallFloat;
  * <b>RE</b>trieval <b>C</b>onference (TREC 1994). Gaithersburg, USA, November 1994.
  */
 public class BM25Similarity extends Similarity {
+  //1.2
   private final float k1;
+  //0.75
   private final float b;
+  //true
   private final boolean discountOverlaps;
 
   /**

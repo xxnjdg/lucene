@@ -39,8 +39,10 @@ import org.apache.lucene.util.IOUtils;
 /** Reader for {@link Lucene90NormsFormat} */
 final class Lucene90NormsProducer extends NormsProducer implements Cloneable {
   // metadata maps (just file pointers and minimal stuff)
+  //key = 域名唯一id value = NormsEntry
   private final Map<Integer, NormsEntry> norms = new HashMap<>();
   private final int maxDoc;
+  //nvd
   private IndexInput data;
   private boolean merging;
   private Map<Integer, IndexInput> disiInputs;
@@ -54,12 +56,14 @@ final class Lucene90NormsProducer extends NormsProducer implements Cloneable {
       String metaCodec,
       String metaExtension)
       throws IOException {
+    //获取文档数
     maxDoc = state.segmentInfo.maxDoc();
     String metaName =
         IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix, metaExtension);
     int version = -1;
 
     // read in the entries from the metadata file.
+    //打开nvm
     try (ChecksumIndexInput in = state.directory.openChecksumInput(metaName, state.context)) {
       Throwable priorE = null;
       try {
@@ -71,6 +75,7 @@ final class Lucene90NormsProducer extends NormsProducer implements Cloneable {
                 VERSION_CURRENT,
                 state.segmentInfo.getId(),
                 state.segmentSuffix);
+        //读取数据
         readFields(in, state.fieldInfos);
       } catch (Throwable exception) {
         priorE = exception;
@@ -81,6 +86,7 @@ final class Lucene90NormsProducer extends NormsProducer implements Cloneable {
 
     String dataName =
         IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix, dataExtension);
+    //打开nvd
     data = state.directory.openInput(dataName, state.context);
     boolean success = false;
     try {
@@ -238,6 +244,7 @@ final class Lucene90NormsProducer extends NormsProducer implements Cloneable {
               "Invalid bytesPerValue: " + entry.bytesPerNorm + ", field: " + info.name, meta);
       }
       entry.normsOffset = meta.readLong();
+      //读取到norms
       norms.put(info.number, entry);
     }
   }

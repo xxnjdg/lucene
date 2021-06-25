@@ -35,6 +35,7 @@ public class IOContext {
   };
 
   /** An object of a enumerator Context type */
+  //Context.DEFAULT
   public final Context context;
 
   public final MergeInfo mergeInfo;

@@ -32,6 +32,8 @@ import org.apache.lucene.util.IntBlockPool;
  */
 abstract class TermsHash {
 
+  //TermVectorsConsumer = null
+  //FreqProxTermsWriter = TermVectorsConsumer
   final TermsHash nextTermsHash;
 
   final IntBlockPool intPool;

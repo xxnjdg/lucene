@@ -38,34 +38,42 @@ public class SegmentCommitInfo {
   public final SegmentInfo info;
 
   /** Id that uniquely identifies this segment commit. */
+  //随机生成
   private byte[] id;
 
   // How many deleted docs in the segment:
   private int delCount;
 
   // How many soft-deleted docs in the segment that are not also hard-deleted:
+  //0
   private int softDelCount;
 
   // Generation number of the live docs file (-1 if there
   // are no deletes yet):
+  //-1
   private long delGen;
 
   // Normally 1+delGen, unless an exception was hit on last
   // attempt to write:
+  //1
   private long nextWriteDelGen;
 
   // Generation number of the FieldInfos (-1 if there are no updates)
+  //-1
   private long fieldInfosGen;
 
   // Normally 1+fieldInfosGen, unless an exception was hit on last attempt to
   // write
+  //1
   private long nextWriteFieldInfosGen;
 
   // Generation number of the DocValues (-1 if there are no updates)
+  //-1
   private long docValuesGen;
 
   // Normally 1+dvGen, unless an exception was hit on last attempt to
   // write
+  //1
   private long nextWriteDocValuesGen;
 
   // Track the per-field DocValues update files
@@ -80,6 +88,7 @@ public class SegmentCommitInfo {
 
   // NOTE: only used in-RAM by IW to track buffered deletes;
   // this is never written to/read from the Directory
+  //1
   private long bufferedDeletesGen = -1;
 
   /**

@@ -29,7 +29,9 @@ public class CharTermAttributeImpl extends AttributeImpl
     implements CharTermAttribute, TermToBytesRefAttribute {
   private static int MIN_BUFFER_SIZE = 10;
 
+  //doc value
   private char[] termBuffer = new char[ArrayUtil.oversize(MIN_BUFFER_SIZE, Character.BYTES)];
+  //长度
   private int termLength = 0;
 
   /**

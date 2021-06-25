@@ -85,6 +85,7 @@ final class FreqProxTermsWriter extends TermsHash {
       Sorter.DocMap sortMap,
       NormsProducer norms)
       throws IOException {
+    //null
     super.flush(fieldsToFlush, state, sortMap, norms);
 
     // Gather all fields that saw any postings:
@@ -93,13 +94,16 @@ final class FreqProxTermsWriter extends TermsHash {
     for (TermsHashPerField f : fieldsToFlush.values()) {
       final FreqProxTermsWriterPerField perField = (FreqProxTermsWriterPerField) f;
       if (perField.getNumTerms() > 0) {
+        //从新排序了term id 数组
         perField.sortTerms();
         assert perField.indexOptions != IndexOptions.NONE;
+        //加入 allFields
         allFields.add(perField);
       }
     }
 
     // Sort by field name
+    //通过域名排序
     CollectionUtil.introSort(allFields);
 
     Fields fields = new FreqProxFields(allFields);
@@ -122,6 +126,7 @@ final class FreqProxTermsWriter extends TermsHash {
           };
     }
 
+    //org.apache.lucene.codecs.perfield.PerFieldPostingsFormat.FieldsWriter
     FieldsConsumer consumer = state.segmentInfo.getCodec().postingsFormat().fieldsConsumer(state);
     boolean success = false;
     try {

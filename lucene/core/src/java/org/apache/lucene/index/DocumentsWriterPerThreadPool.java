@@ -44,9 +44,22 @@ import org.apache.lucene.util.ThreadInterruptedException;
  */
 final class DocumentsWriterPerThreadPool implements Iterable<DocumentsWriterPerThread>, Closeable {
 
+  //
   private final Set<DocumentsWriterPerThread> dwpts =
       Collections.newSetFromMap(new IdentityHashMap<>());
   private final Deque<DocumentsWriterPerThread> freeList = new ArrayDeque<>();
+  //() -> {
+  //              final FieldInfos.Builder infos = new FieldInfos.Builder(globalFieldNumberMap);
+  //              return new DocumentsWriterPerThread(
+  //                  indexCreatedVersionMajor,
+  //                  segmentNameSupplier.get(),
+  //                  directoryOrig,
+  //                  directory,
+  //                  config,
+  //                  deleteQueue,
+  //                  infos,
+  //                  pendingNumDocs,
+  //                  enableTestPoints);
   private final Supplier<DocumentsWriterPerThread> dwptFactory;
   private int takenWriterPermits = 0;
   private boolean closed;
@@ -100,7 +113,9 @@ final class DocumentsWriterPerThreadPool implements Iterable<DocumentsWriterPerT
     // end of the world it's violating the contract that we don't release any new DWPT after this
     // pool is closed
     ensureOpen();
+    //创建
     DocumentsWriterPerThread dwpt = dwptFactory.get();
+    //加锁
     dwpt.lock(); // lock so nobody else will get this DWPT
     dwpts.add(dwpt);
     return dwpt;

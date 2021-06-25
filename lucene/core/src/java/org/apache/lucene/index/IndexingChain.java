@@ -71,22 +71,28 @@ final class IndexingChain implements Accountable {
   // NOTE: I tried using Hash Map<String,PerField>
   // but it was ~2% slower on Wiki and Geonames with Java
   // 1.7.0_25:
+  // 没有采用HashMao来存储PerFiled，随着添加更多的域名,该数组会扩容，数组下标是域名的hashCode
   private PerField[] fieldHash = new PerField[2];
   private int hashMask = 1;
 
+  // 域名的总个数
   private int totalFieldCount;
+  //1
   private long nextFieldGen;
 
   // Holds fields seen in each document
+  // 初始值设置的很小，会动态扩容
   private PerField[] fields = new PerField[1];
   private PerField[] docFields = new PerField[2];
   private final InfoStream infoStream;
   private final ByteBlockPool.Allocator byteBlockAllocator;
   private final LiveIndexWriterConfig indexWriterConfig;
   private final int indexCreatedVersionMajor;
+  ///abortingExceptionConsumer = this::onAbortingException
   private final Consumer<Throwable> abortingExceptionConsumer;
   private boolean hasHitAbortingException;
 
+  //abortingExceptionConsumer = this::onAbortingException
   IndexingChain(
       int indexCreatedVersionMajor,
       SegmentInfo segmentInfo,
@@ -227,6 +233,7 @@ final class IndexingChain implements Accountable {
         state.segmentInfo.maxDoc(), comparators.toArray(IndexSorter.DocComparator[]::new));
   }
 
+  //flush
   Sorter.DocMap flush(SegmentWriteState state) throws IOException {
 
     // NOTE: caller (DocumentsWriterPerThread) handles
@@ -234,6 +241,7 @@ final class IndexingChain implements Accountable {
     Sorter.DocMap sortMap = maybeSortSegment(state);
     int maxDoc = state.segmentInfo.maxDoc();
     long t0 = System.nanoTime();
+    //写 Norms
     writeNorms(state, sortMap);
     if (infoStream.isEnabled("IW")) {
       infoStream.message("IW", ((System.nanoTime() - t0) / 1000000) + " msec to write norms");
@@ -247,6 +255,7 @@ final class IndexingChain implements Accountable {
             state.segmentSuffix);
 
     t0 = System.nanoTime();
+    //写 DocValues
     writeDocValues(state, sortMap);
     if (infoStream.isEnabled("IW")) {
       infoStream.message("IW", ((System.nanoTime() - t0) / 1000000) + " msec to write docValues");
@@ -267,6 +276,7 @@ final class IndexingChain implements Accountable {
     // it's possible all docs hit non-aborting exceptions...
     t0 = System.nanoTime();
     storedFieldsConsumer.finish(maxDoc);
+    //flush fdt fdm fdx文件
     storedFieldsConsumer.flush(state, sortMap);
     if (infoStream.isEnabled("IW")) {
       infoStream.message(
@@ -486,9 +496,11 @@ final class IndexingChain implements Accountable {
     boolean success = false;
     NormsConsumer normsConsumer = null;
     try {
+      //是否有 Norms
       if (state.fieldInfos.hasNorms()) {
         NormsFormat normsFormat = state.segmentInfo.getCodec().normsFormat();
         assert normsFormat != null;
+        //nvd nvm，创建NormsConsumer
         normsConsumer = normsFormat.normsConsumer(state);
 
         for (FieldInfo fi : state.fieldInfos) {
@@ -507,6 +519,7 @@ final class IndexingChain implements Accountable {
       success = true;
     } finally {
       if (success) {
+        //关闭
         IOUtils.close(normsConsumer);
       } else {
         IOUtils.closeWhileHandlingException(normsConsumer);
@@ -567,10 +580,12 @@ final class IndexingChain implements Accountable {
     }
   }
 
+  //0
   void processDocument(int docID, Iterable<? extends IndexableField> document) throws IOException {
     // number of unique fields by names (collapses multiple field instances by the same name)
     int fieldCount = 0;
     int indexedFieldCount = 0; // number of unique fields indexed with postings
+    //0
     long fieldGen = nextFieldGen++;
     int docFieldIdx = 0;
 
@@ -587,6 +602,7 @@ final class IndexingChain implements Accountable {
       // build schema for each unique doc field
       for (IndexableField field : document) {
         IndexableFieldType fieldType = field.fieldType();
+        // 获得封装了 域名 的信息的PerFiled对象，如果之前已经有了那么复用，否则创建
         PerField pf = getOrAddPerField(field.name(), fieldType);
         if (pf.fieldGen != fieldGen) { // first time we see this field in this document
           fields[fieldCount++] = pf;
@@ -770,9 +786,11 @@ final class IndexingChain implements Accountable {
   private PerField getOrAddPerField(String fieldName, IndexableFieldType fieldType) {
     final int hashPos = fieldName.hashCode() & hashMask;
     PerField pf = fieldHash[hashPos];
+    //如果pf不等于null找到哈希值和名字一样的pf,即所有相同文档的共用一个域值pf数据结构
     while (pf != null && pf.fieldName.equals(fieldName) == false) {
       pf = pf.next;
     }
+    //不存在创建
     if (pf == null) {
       // first time we encounter field with this name in this segment
       FieldSchema schema = new FieldSchema(fieldName);
@@ -1013,6 +1031,7 @@ final class IndexingChain implements Accountable {
 
   /** NOTE: not static: accesses at least docState, termsHash. */
   private final class PerField implements Comparable<PerField> {
+    //文档字段名，即域名，唯一
     final String fieldName;
     final int indexCreatedVersionMajor;
     final FieldSchema schema;
@@ -1020,6 +1039,7 @@ final class IndexingChain implements Accountable {
     final Similarity similarity;
 
     FieldInvertState invertState;
+    //FreqProxTermsWriterPerField
     TermsHashPerField termsHashPerField;
 
     // Non-null if this field ever had doc values in this
@@ -1033,6 +1053,7 @@ final class IndexingChain implements Accountable {
     VectorValuesWriter vectorValuesWriter;
 
     /** We use this to know when a PerField is seen for the first time in the current document. */
+    //同个文档数值一样，自增
     long fieldGen = -1;
 
     // Used by the hash table
@@ -1045,6 +1066,7 @@ final class IndexingChain implements Accountable {
     TokenStream tokenStream;
     private final InfoStream infoStream;
     private final Analyzer analyzer;
+    //true
     private boolean first; // first in a document
 
     PerField(
@@ -1123,6 +1145,7 @@ final class IndexingChain implements Accountable {
         invertState.reset();
       }
 
+      //是否分词
       final boolean analyzed = field.fieldType().tokenized() && analyzer != null;
       /*
        * To assist people in tracking down problems in analysis components, we wish to write the field name to the infostream
@@ -1145,8 +1168,11 @@ final class IndexingChain implements Accountable {
           // will be marked as deleted, but still
           // consume a docID
 
+          // 获得当前token在token stream中的位置
           int posIncr = invertState.posIncrAttribute.getPositionIncrement();
+          // invertState对象用来跟踪terms在被添加到索引期间的一些信息, 包括个数、位置、偏移
           invertState.position += posIncr;
+          // position的值应该是大于0，且递增的, 否则抛出异常
           if (invertState.position < invertState.lastPosition) {
             if (posIncr == 0) {
               throw new IllegalArgumentException(
@@ -1179,12 +1205,14 @@ final class IndexingChain implements Accountable {
                     + "': max allowed position is "
                     + IndexWriter.MAX_POSITION);
           }
+          // 记录当前的position，用于比较
           invertState.lastPosition = invertState.position;
           if (posIncr == 0) {
             invertState.numOverlap++;
           }
 
           int startOffset = invertState.offset + invertState.offsetAttribute.startOffset();
+          // endOffset描述了域值被分词后的terms的个数
           int endOffset = invertState.offset + invertState.offsetAttribute.endOffset();
           if (startOffset < invertState.lastStartOffset || endOffset < startOffset) {
             throw new IllegalArgumentException(
@@ -1199,6 +1227,7 @@ final class IndexingChain implements Accountable {
                     + field.name()
                     + "'");
           }
+          // 记录当前的startOffset，在处理下一个token的时候用于比较
           invertState.lastStartOffset = startOffset;
 
           try {
@@ -1218,6 +1247,7 @@ final class IndexingChain implements Accountable {
           // corrupt and should not be flushed to a
           // new segment:
           try {
+            // 根据当前term，主要是记录term的倒排表信息
             termsHashPerField.add(invertState.termAttribute.getBytesRef(), docID);
           } catch (MaxBytesLengthExceededException e) {
             byte[] prefix = new byte[30];
@@ -1312,7 +1342,9 @@ final class IndexingChain implements Accountable {
    * ensures that a field has the same data structures across all documents.
    */
   private static final class FieldSchema {
+    //文档字段名，即域名，唯一
     private final String name;
+    //文档号
     private int docID = 0;
     private final Map<String, String> attributes = new HashMap<>();
     private boolean omitNorms = false;

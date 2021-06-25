@@ -26,9 +26,11 @@ import org.apache.lucene.util.IOUtils;
 
 /** @lucene.internal */
 final class DocumentsWriterFlushQueue {
+  //+ -
   private final Queue<FlushTicket> queue = new ArrayDeque<>();
   // we track tickets separately since count must be present even before the ticket is
   // constructed ie. queue.size would not reflect it.
+  //0
   private final AtomicInteger ticketCount = new AtomicInteger();
   private final ReentrantLock purgeLock = new ReentrantLock();
 
@@ -157,10 +159,14 @@ final class DocumentsWriterFlushQueue {
   }
 
   static final class FlushTicket {
+    //null
     private final FrozenBufferedUpdates frozenUpdates;
+    //true
     private final boolean hasSegment;
+    //
     private FlushedSegment segment;
     private boolean failed = false;
+    //true
     private boolean published = false;
 
     FlushTicket(FrozenBufferedUpdates frozenUpdates, boolean hasSegment) {

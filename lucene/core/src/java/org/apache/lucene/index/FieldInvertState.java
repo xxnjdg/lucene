@@ -35,11 +35,16 @@ public final class FieldInvertState {
   final int indexCreatedVersionMajor;
   final String name;
   final IndexOptions indexOptions;
+  //0
   int position;
+  //1
   int length;
   int numOverlap;
+  //21
   int offset;
+  //1
   int maxTermFrequency;
+  //1
   int uniqueTermCount;
   // we must track these across field instances (multi-valued case)
   int lastStartOffset = 0;

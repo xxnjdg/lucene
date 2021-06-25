@@ -148,6 +148,7 @@ public final class LZ4WithPresetDictCompressionMode extends CompressionMode {
 
   private static class LZ4WithPresetDictCompressor extends Compressor {
 
+    //ByteBuffersDataOutput
     final ByteBuffersDataOutput compressed;
     final LZ4.FastCompressionHashTable hashTable;
     byte[] buffer;
@@ -169,6 +170,7 @@ public final class LZ4WithPresetDictCompressionMode extends CompressionMode {
     public void compress(byte[] bytes, int off, int len, DataOutput out) throws IOException {
       final int dictLength = len / (NUM_SUB_BLOCKS * DICT_SIZE_FACTOR);
       final int blockLength = (len - dictLength + NUM_SUB_BLOCKS - 1) / NUM_SUB_BLOCKS;
+      //调整 buffer 大小
       buffer = ArrayUtil.grow(buffer, dictLength + blockLength);
       out.writeVInt(dictLength);
       out.writeVInt(blockLength);

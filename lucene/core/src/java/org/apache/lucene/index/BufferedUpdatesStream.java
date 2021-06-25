@@ -50,6 +50,7 @@ final class BufferedUpdatesStream implements Accountable {
   // Starts at 1 so that SegmentInfos that have never had
   // deletes applied (whose bufferedDelGen defaults to 0)
   // will be correct:
+  //2
   private long nextGen = 1;
   private final FinishedSegments finishedSegments;
   private final InfoStream infoStream;
@@ -330,6 +331,7 @@ final class BufferedUpdatesStream implements Accountable {
   private static class FinishedSegments {
 
     /** Largest del gen, inclusive, for which all prior packets have finished applying. */
+    //1
     private long completedDelGen;
 
     /**

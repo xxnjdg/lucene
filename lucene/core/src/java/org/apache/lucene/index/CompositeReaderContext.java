@@ -23,8 +23,10 @@ import java.util.List;
 
 /** {@link IndexReaderContext} for {@link CompositeReader} instance. */
 public final class CompositeReaderContext extends IndexReaderContext {
+  //LeafReaderContext
   private final List<IndexReaderContext> children;
   private final List<LeafReaderContext> leaves;
+  //StandardDirectoryReader
   private final CompositeReader reader;
 
   static CompositeReaderContext create(CompositeReader reader) {

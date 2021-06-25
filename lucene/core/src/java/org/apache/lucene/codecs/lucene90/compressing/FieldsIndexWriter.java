@@ -51,17 +51,29 @@ public final class FieldsIndexWriter implements Closeable {
   private final Directory dir;
   private final String name;
   private final String suffix;
+  //INDEX_EXTENSION
   private final String extension;
+  //INDEX_CODEC_NAME
   private final String codecName;
   private final byte[] id;
+  //10
   private final int blockShift;
+  //IOContext.DEFAULT
   private final IOContext ioContext;
+  //-doc_ids
   private IndexOutput docsOut;
+  //file_pointers
   private IndexOutput filePointersOut;
+  //2
   private int totalDocs;
+  //1
   private int totalChunks;
+  //54
   private long previousFP;
 
+  //ioContext = IOContext.DEFAULT
+  //INDEX_EXTENSION,
+  //              INDEX_CODEC_NAME
   FieldsIndexWriter(
       Directory dir,
       String name,
@@ -107,10 +119,12 @@ public final class FieldsIndexWriter implements Closeable {
     if (numDocs != totalDocs) {
       throw new IllegalStateException("Expected " + numDocs + " docs, but got " + totalDocs);
     }
+    //关闭 docsOut filePointersOut
     CodecUtil.writeFooter(docsOut);
     CodecUtil.writeFooter(filePointersOut);
     IOUtils.close(docsOut, filePointersOut);
 
+    //创建fdx
     try (IndexOutput dataOut =
         dir.createOutput(IndexFileNames.segmentFileName(name, suffix, extension), ioContext)) {
       CodecUtil.writeIndexHeader(dataOut, codecName + "Idx", VERSION_CURRENT, id, suffix);
@@ -120,6 +134,7 @@ public final class FieldsIndexWriter implements Closeable {
       metaOut.writeInt(totalChunks + 1);
       metaOut.writeLong(dataOut.getFilePointer());
 
+      //读取 -doc_ids 文件
       try (ChecksumIndexInput docsIn =
           dir.openChecksumInput(docsOut.getName(), IOContext.READONCE)) {
         CodecUtil.checkHeader(docsIn, codecName + "Docs", VERSION_CURRENT, VERSION_CURRENT);
@@ -130,9 +145,11 @@ public final class FieldsIndexWriter implements Closeable {
           long doc = 0;
           docs.add(doc);
           for (int i = 0; i < totalChunks; ++i) {
+            //读取文档数
             doc += docsIn.readVInt();
             docs.add(doc);
           }
+          //flush 进 fdm
           docs.finish();
           if (doc != totalDocs) {
             throw new CorruptIndexException("Docs don't add up", docsIn);
@@ -143,10 +160,12 @@ public final class FieldsIndexWriter implements Closeable {
           CodecUtil.checkFooter(docsIn, priorE);
         }
       }
+      //删除 -doc_ids
       dir.deleteFile(docsOut.getName());
       docsOut = null;
 
       metaOut.writeLong(dataOut.getFilePointer());
+      //打开file_pointers
       try (ChecksumIndexInput filePointersIn =
           dir.openChecksumInput(filePointersOut.getName(), IOContext.READONCE)) {
         CodecUtil.checkHeader(
@@ -156,6 +175,7 @@ public final class FieldsIndexWriter implements Closeable {
           final DirectMonotonicWriter filePointers =
               DirectMonotonicWriter.getInstance(metaOut, dataOut, totalChunks + 1, blockShift);
           long fp = 0;
+          //写入fdt 每一个Chunks起始位置
           for (int i = 0; i < totalChunks; ++i) {
             fp += filePointersIn.readVLong();
             filePointers.add(fp);
@@ -163,7 +183,9 @@ public final class FieldsIndexWriter implements Closeable {
           if (maxPointer < fp) {
             throw new CorruptIndexException("File pointers don't add up", filePointersIn);
           }
+          //结束位置
           filePointers.add(maxPointer);
+          //写入fdt 所有每一个Chunks起始位置
           filePointers.finish();
         } catch (Throwable e) {
           priorE = e;
@@ -171,6 +193,7 @@ public final class FieldsIndexWriter implements Closeable {
           CodecUtil.checkFooter(filePointersIn, priorE);
         }
       }
+      //删除
       dir.deleteFile(filePointersOut.getName());
       filePointersOut = null;
 

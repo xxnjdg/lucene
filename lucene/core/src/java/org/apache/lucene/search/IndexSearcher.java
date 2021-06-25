@@ -515,6 +515,7 @@ public class IndexSearcher {
    *
    * @throws TooManyClauses If a query would exceed {@link IndexSearcher#getMaxClauseCount()}
    *     clauses.
+   *     分页搜索
    */
   public TopDocs search(Query query, int n) throws IOException {
     return searchAfter(null, query, n);

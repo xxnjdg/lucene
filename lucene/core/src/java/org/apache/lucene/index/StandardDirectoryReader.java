@@ -38,9 +38,12 @@ import org.apache.lucene.util.Version;
 /** Default implementation of {@link DirectoryReader}. */
 public final class StandardDirectoryReader extends DirectoryReader {
 
+  //null
   final IndexWriter writer;
   final SegmentInfos segmentInfos;
+  //false true
   private final boolean applyAllDeletes;
+  //false
   private final boolean writeAllDeletes;
 
   /** package private constructor, called only from static open() methods. */
@@ -83,6 +86,7 @@ public final class StandardDirectoryReader extends DirectoryReader {
                   + " but was: "
                   + minSupportedMajorVersion);
         }
+        //读取 SegmentInfos
         SegmentInfos sis =
             SegmentInfos.readCommit(directory, segmentFileName, minSupportedMajorVersion);
         final SegmentReader[] readers = new SegmentReader[sis.size()];
@@ -94,6 +98,7 @@ public final class StandardDirectoryReader extends DirectoryReader {
           }
           // This may throw CorruptIndexException if there are too many docs, so
           // it must be inside try clause so we close readers in that case:
+          //生成 StandardDirectoryReader
           DirectoryReader reader =
               new StandardDirectoryReader(directory, readers, null, sis, leafSorter, false, false);
           success = true;
@@ -119,6 +124,7 @@ public final class StandardDirectoryReader extends DirectoryReader {
     // IndexWriter synchronizes externally before calling
     // us, which ensures infos will not change; so there's
     // no need to process segments in reverse order
+    //段数量
     final int numSegments = infos.size();
 
     final List<SegmentReader> readers = new ArrayList<>(numSegments);
@@ -127,6 +133,7 @@ public final class StandardDirectoryReader extends DirectoryReader {
     final SegmentInfos segmentInfos = infos.clone();
     int infosUpto = 0;
     try {
+      //遍历段
       for (int i = 0; i < numSegments; i++) {
         // NOTE: important that we use infos not
         // segmentInfos here, so that we are passing the
@@ -134,6 +141,7 @@ public final class StandardDirectoryReader extends DirectoryReader {
         // IndexWriter's segmentInfos:
         final SegmentCommitInfo info = infos.info(i);
         assert info.info.dir == dir;
+        //获取 SegmentReader
         final SegmentReader reader = readerFunction.apply(info);
         if (reader.numDocs() > 0
             || writer.getConfig().mergePolicy.keepFullyDeletedSegment(() -> reader)) {
@@ -146,6 +154,7 @@ public final class StandardDirectoryReader extends DirectoryReader {
         }
       }
 
+      //3 1
       writer.incRefDeleter(segmentInfos);
 
       StandardDirectoryReader result =

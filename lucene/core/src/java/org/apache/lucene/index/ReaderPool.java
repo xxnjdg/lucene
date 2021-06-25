@@ -45,13 +45,16 @@ import org.apache.lucene.util.InfoStream;
  */
 final class ReaderPool implements Closeable {
 
+  //
   private final Map<SegmentCommitInfo, ReadersAndUpdates> readerMap = new HashMap<>();
   private final Directory directory;
   private final Directory originalDirectory;
   private final FieldInfos.FieldNumbers fieldNumbers;
+  //bufferedUpdatesStream::getCompletedDelGen
   private final LongSupplier completedDelGenSupplier;
   private final InfoStream infoStream;
   private final SegmentInfos segmentInfos;
+  //null
   private final String softDeletesField;
   // This is a "write once" variable (like the organic dye
   // on a DVD-R that may or may not be heated by a laser and
@@ -65,9 +68,11 @@ final class ReaderPool implements Closeable {
   // readers.
   // in practice this should be called once the readers are likely
   // to be needed and reused ie if IndexWriter#getReader is called.
+  //true
   private volatile boolean poolReaders;
   private final AtomicBoolean closed = new AtomicBoolean(false);
 
+  //bufferedUpdatesStream::getCompletedDelGen
   ReaderPool(
       Directory directory,
       Directory originalDirectory,

@@ -775,16 +775,24 @@ if (splitOnWhitespace == false) {
   /** Generated Token Manager. */
   public QueryParserTokenManager token_source;
   /** Current token. */
+  //are
   public Token token;
   /** Next token. */
+  //token(are) ""
   public Token jj_nt;
+  //20 -1 0 -1
   private int jj_ntk;
+  //token(are) jj_lastpos = "" jj_scanpos = are
   private Token jj_scanpos, jj_lastpos;
+  //2 -1 2 0
   private int jj_la;
   /** Whether we are looking ahead. */
+  //
   private boolean jj_lookingAhead = false;
   private boolean jj_semLA;
+  //1 2
   private int jj_gen;
+  //jj_la1[3] = 0 jj_la1[14]=1 jj_la1[5] = 1
   final private int[] jj_la1 = new int[25];
   static private int[] jj_la1_0;
   static private int[] jj_la1_1;
@@ -798,8 +806,11 @@ if (splitOnWhitespace == false) {
     private static void jj_la1_init_1() {
        jj_la1_1 = new int[] {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x1,0x1,0x0,0x0,0x0,0x0,0x0,0x0,0x0,};
     }
+    //[0] = gen=1 first = new Token(); arg = 2
+    //[2] = gen=2 first = new Token(); arg = 2
   final private JJCalls[] jj_2_rtns = new JJCalls[3];
   private boolean jj_rescan = false;
+  //1 2
   private int jj_gc = 0;
 
   /** Constructor with user supplied CharStream. */

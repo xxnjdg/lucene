@@ -28,6 +28,7 @@ public class OutputStreamIndexOutput extends IndexOutput {
   private final CRC32 crc = new CRC32();
   private final BufferedOutputStream os;
 
+  //写入了多少字节
   private long bytesWritten = 0L;
   private boolean flushedOnClose = false;
 

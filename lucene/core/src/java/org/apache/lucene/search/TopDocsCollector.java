@@ -44,6 +44,7 @@ public abstract class TopDocsCollector<T extends ScoreDoc> implements Collector 
    * top scoring documents, while other PQ implementations may hold documents sorted by other
    * criteria.
    */
+  //HitQueue
   protected final PriorityQueue<T> pq;
 
   /** The total number of documents that the collector encountered. */

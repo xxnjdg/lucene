@@ -41,6 +41,7 @@ import org.apache.lucene.util.bkd.BKDWriter;
 public class Lucene90PointsWriter extends PointsWriter {
 
   /** Outputs used to write the BKD tree data files. */
+  //dataOut = kdd metaOut = kdm indexOut = kdi
   protected final IndexOutput metaOut, indexOut, dataOut;
 
   final SegmentWriteState writeState;

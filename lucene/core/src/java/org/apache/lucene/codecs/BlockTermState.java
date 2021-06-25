@@ -27,8 +27,10 @@ import org.apache.lucene.index.TermState;
  */
 public class BlockTermState extends OrdTermState {
   /** how many docs have this term */
+  //这个term有多少个docs数
   public int docFreq;
   /** total number of occurrences of this term */
+  //在这个term 词频 总数
   public long totalTermFreq;
 
   /** the term's ord in the current block */

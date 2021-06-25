@@ -92,7 +92,9 @@ public class IndexFiles {
     try {
       System.out.println("Indexing to directory '" + indexPath + "'...");
 
+      //索引文件
       Directory dir = FSDirectory.open(Paths.get(indexPath));
+      //标准分词器
       Analyzer analyzer = new StandardAnalyzer();
       IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
 

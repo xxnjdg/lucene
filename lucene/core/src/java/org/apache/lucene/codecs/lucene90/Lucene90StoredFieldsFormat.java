@@ -113,6 +113,7 @@ public class Lucene90StoredFieldsFormat extends StoredFieldsFormat {
   /** Attribute key for compression mode. */
   public static final String MODE_KEY = Lucene90StoredFieldsFormat.class.getSimpleName() + ".mode";
 
+  //Lucene90StoredFieldsFormat.Mode.BEST_SPEED
   final Mode mode;
 
   /** Stored fields format with default options */
@@ -136,6 +137,7 @@ public class Lucene90StoredFieldsFormat extends StoredFieldsFormat {
     return impl(mode).fieldsReader(directory, si, fn, context);
   }
 
+  //IOContext.DEFAULT
   @Override
   public StoredFieldsWriter fieldsWriter(Directory directory, SegmentInfo si, IOContext context)
       throws IOException {

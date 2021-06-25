@@ -305,6 +305,7 @@ private int jjMoveNfa_2(int startState, int curPos)
                   if ((0x97ffffff87ffffffL & l) != 0L)
                   {
                      if (kind > 20)
+                        //
                         kind = 20;
                      { jjCheckNAddStates(6, 10); }
                   }
@@ -626,6 +627,7 @@ private int jjMoveNfa_2(int startState, int curPos)
          kind = 0x7fffffff;
       }
       ++curPos;
+      // i = 56 startsAt = 49  i = 7 startsAt = 0 56 49
       if ((i = jjnewStateCnt) == (startsAt = 49 - (jjnewStateCnt = startsAt)))
          return curPos;
       try { curChar = input_stream.readChar(); }
@@ -982,9 +984,13 @@ private static final boolean jjCanMove_2(int hiByte, int i1, int i2, long l1, lo
 
 int curLexState = 2;
 int defaultLexState = 2;
+//49 56 7 56 0
 int jjnewStateCnt;
+//0x80000004
 int jjround;
+//0 1 2 -1
 int jjmatchedPos;
+//0x7fffffff 20 0
 int jjmatchedKind;
 
 /** Get the next Token. */
@@ -1198,11 +1204,15 @@ static final long[] jjtoMore = {
 };
     protected CharStream  input_stream;
 
+    //0x80000000  [42] =  0x80000004 [43] =  0x80000004 [45] =  0x80000004 [46] =  0x80000004 [31] =  0x80000004
+   //[33] =  0x80000004 [34] =  0x80000004
     private final int[] jjrounds = new int[49];
+    //[0] = 33 [1] = 34 [2] = 45 [3] = 46 [4] = 31 [5] = 42 [6] = 43 [49] = 42 [50] = 43 [51] = 45 [52] = 46 [53] = 31 [54] = 33 [55] = 34
     private final int[] jjstateSet = new int[2 * 49];
     private final StringBuilder jjimage = new StringBuilder();
     private StringBuilder image = jjimage;
     private int jjimageLen;
     private int lengthOfMatch;
+    //a
     protected int curChar;
 }

@@ -36,6 +36,7 @@ class PendingDeletes {
   // case getMutableBits needs to be called
   private FixedBitSet writeableLiveDocs;
   protected int pendingDeleteCount;
+  //true
   boolean liveDocsInitialized;
 
   PendingDeletes(SegmentReader reader, SegmentCommitInfo info) {

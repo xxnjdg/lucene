@@ -22,8 +22,11 @@ class ParallelPostingsArray {
   static final int BYTES_PER_POSTING = 3 * Integer.BYTES;
 
   final int size;
+  //bytePool开始位置
   final int[] textStarts; // maps term ID to the terms's text start in the bytesHash
+  //0 intPool 偏移
   final int[] addressOffset; // maps term ID to current stream address
+  //22 bytePool后面 newSlice 起始
   final int[] byteStarts; // maps term ID to stream start offset in the byte pool
 
   ParallelPostingsArray(final int size) {

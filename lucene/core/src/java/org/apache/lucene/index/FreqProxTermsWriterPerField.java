@@ -27,6 +27,7 @@ import org.apache.lucene.util.BytesRef;
 // be configured as any number of files 1..N
 final class FreqProxTermsWriterPerField extends TermsHashPerField {
 
+  //
   private FreqProxPostingsArray freqProxPostingsArray;
   private final FieldInvertState fieldState;
   private final FieldInfo fieldInfo;
@@ -252,7 +253,9 @@ final class FreqProxTermsWriterPerField extends TermsHashPerField {
     }
 
     int termFreqs[]; // # times this term occurs in the current doc
+    //0
     int lastDocIDs[]; // Last docID where this term occurred
+    //0
     int lastDocCodes[]; // Code for prior doc
     int lastPositions[]; // Last position where this term occurred
     int lastOffsets[]; // Last endOffset where this term occurred

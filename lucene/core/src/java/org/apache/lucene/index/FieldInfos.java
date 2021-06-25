@@ -309,8 +309,10 @@ public class FieldInfos implements Iterable<FieldInfo> {
 
   static final class FieldNumbers {
 
+    //自增 字段名
     private final Map<Integer, String> numberToName;
     private final Map<String, Integer> nameToNumber;
+    //字段名 IndexOptions
     private final Map<String, IndexOptions> indexOptions;
     // We use this to enforce that a given field never
     // changes DV type, even across segments / IndexWriter
@@ -326,6 +328,7 @@ public class FieldInfos implements Iterable<FieldInfo> {
     // TODO: we should similarly catch an attempt to turn
     // norms back on after they were already committed; today
     // we silently discard the norm but this is badly trappy
+    //自增
     private int lowestUnassignedFieldNumber = -1;
 
     // The soft-deletes field from IWC to enforce a single soft-deletes field
@@ -588,6 +591,7 @@ public class FieldInfos implements Iterable<FieldInfo> {
   static final class Builder {
     private final HashMap<String, FieldInfo> byName = new HashMap<>();
     final FieldNumbers globalFieldNumbers;
+    //true
     private boolean finished;
 
     /** Creates a new instance with the given {@link FieldNumbers}. */
@@ -647,7 +651,9 @@ public class FieldInfos implements Iterable<FieldInfo> {
      * @throws IllegalStateException if the Builder is already finished building and doesn't accept
      *     new fields.
      */
+    //-1
     FieldInfo add(FieldInfo fi, long dvGen) {
+      //null
       final FieldInfo curFi = fieldInfo(fi.getName());
       if (curFi != null) {
         curFi.verifySameSchema(fi);
@@ -664,6 +670,7 @@ public class FieldInfos implements Iterable<FieldInfo> {
       // If the field was seen before then we'll get the same name and number,
       // else we'll allocate a new one
       assert assertNotFinished();
+      //获取自增
       final int fieldNumber = globalFieldNumbers.addOrGet(fi);
       FieldInfo fiNew =
           new FieldInfo(

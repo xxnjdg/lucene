@@ -320,6 +320,7 @@ public final class Lucene90FieldInfosFormat extends FieldInfosFormat {
           Lucene90FieldInfosFormat.FORMAT_CURRENT,
           segmentInfo.getId(),
           segmentSuffix);
+      //开始写入fnm
       output.writeVInt(infos.size());
       for (FieldInfo fi : infos) {
         fi.checkConsistency();

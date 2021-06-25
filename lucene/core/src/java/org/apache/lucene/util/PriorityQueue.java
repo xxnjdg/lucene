@@ -33,8 +33,11 @@ import java.util.function.Supplier;
  * @lucene.internal
  */
 public abstract class PriorityQueue<T> implements Iterable<T> {
+  //文档长度
   private int size = 0;
+  //文档长度
   private final int maxSize;
+  //文档长度 [1] = [2] = new ScoreDoc(Integer.MAX_VALUE, Float.NEGATIVE_INFINITY)
   private final T[] heap;
 
   /** Create an empty priority queue of the configured size. */

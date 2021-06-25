@@ -35,6 +35,8 @@ import org.apache.lucene.util.IntBlockPool;
 abstract class TermsHashPerField implements Comparable<TermsHashPerField> {
   private static final int HASH_INIT_SIZE = 4;
 
+  //FreqProxTermsWriterPerField = TermVectorsConsumerPerField
+  //TermVectorsConsumerPerField = null
   private final TermsHashPerField nextPerField;
   private final IntBlockPool intPool;
   final ByteBlockPool bytePool;
@@ -47,6 +49,7 @@ abstract class TermsHashPerField implements Comparable<TermsHashPerField> {
   // to the addresses where the term stream was written to when we saw it the last time.
   private int[] termStreamAddressBuffer;
   private int streamAddressOffset;
+  //TermVectorsConsumerPerField = 2
   private final int streamCount;
   private final String fieldName;
   final IndexOptions indexOptions;
@@ -54,6 +57,7 @@ abstract class TermsHashPerField implements Comparable<TermsHashPerField> {
    * TermsHashPerField is hashing term vectors.*/
   private final BytesRefHash bytesHash;
 
+  //FreqProxPostingsArray
   ParallelPostingsArray postingsArray;
   private int lastDocID; // only with assert
 

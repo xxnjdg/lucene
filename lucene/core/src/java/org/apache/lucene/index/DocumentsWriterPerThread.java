@@ -115,18 +115,23 @@ final class DocumentsWriterPerThread implements Accountable {
 
   // Updates for our still-in-RAM (to be flushed next) segment
   private final BufferedUpdates pendingUpdates;
+  //当前段
   private final SegmentInfo segmentInfo; // Current segment we are working on
   private boolean aborted = false; // True if we aborted
+  //true
   private SetOnce<Boolean> flushPending = new SetOnce<>();
+  //
   private volatile long lastCommittedBytesUsed;
   private SetOnce<Boolean> hasFlushed = new SetOnce<>();
 
   private final FieldInfos.Builder fieldInfos;
   private final InfoStream infoStream;
+  //1
   private int numDocsInRAM;
   final DocumentsWriterDeleteQueue deleteQueue;
   private final DeleteSlice deleteSlice;
   private final NumberFormat nf = NumberFormat.getInstance(Locale.ROOT);
+  //0
   private final AtomicLong pendingNumDocs;
   private final LiveIndexWriterConfig indexWriterConfig;
   private final boolean enableTestPoints;
@@ -134,6 +139,7 @@ final class DocumentsWriterPerThread implements Accountable {
   private int[] deleteDocIDs = new int[0];
   private int numDeletedDocIds = 0;
 
+  //pendingNumDocs = 0
   DocumentsWriterPerThread(
       int indexVersionCreated,
       String segmentName,
@@ -206,6 +212,8 @@ final class DocumentsWriterPerThread implements Accountable {
     }
   }
 
+  ////org.apache.lucene.index.IndexWriter.flushNotifications
+  //deleteNode = null
   long updateDocuments(
       Iterable<? extends Iterable<? extends IndexableField>> docs,
       DocumentsWriterDeleteQueue.Node<?> deleteNode,
@@ -225,6 +233,7 @@ final class DocumentsWriterPerThread implements Accountable {
                 + " seg="
                 + segmentInfo.name);
       }
+      //0
       final int docsInRamBefore = numDocsInRAM;
       boolean allDocsIndexed = false;
       try {
@@ -333,11 +342,14 @@ final class DocumentsWriterPerThread implements Accountable {
   }
 
   /** Flush all pending docs to a new segment */
+  //org.apache.lucene.index.IndexWriter.flushNotifications
   FlushedSegment flush(DocumentsWriter.FlushNotifications flushNotifications) throws IOException {
     assert flushPending.get() == Boolean.TRUE;
     assert numDocsInRAM > 0;
     assert deleteSlice.isEmpty() : "all deletes must be applied in prepareFlush";
+    //设置doc
     segmentInfo.setMaxDoc(numDocsInRAM);
+    //创建 SegmentWriteState
     final SegmentWriteState flushState =
         new SegmentWriteState(
             infoStream,
@@ -383,6 +395,7 @@ final class DocumentsWriterPerThread implements Accountable {
       } else {
         softDeletedDocs = null;
       }
+      //
       sortMap = indexingChain.flush(flushState);
       if (softDeletedDocs == null) {
         flushState.softDelCountOnFlush = 0;
@@ -395,8 +408,10 @@ final class DocumentsWriterPerThread implements Accountable {
       // We clear this here because we already resolved them (private to this segment) when writing
       // postings:
       pendingUpdates.clearDeleteTerms();
+      //设置文件
       segmentInfo.setFiles(new HashSet<>(directory.getCreatedFiles()));
 
+      //创建 SegmentCommitInfo
       final SegmentCommitInfo segmentInfoPerCommit =
           new SegmentCommitInfo(
               segmentInfo,
@@ -493,6 +508,7 @@ final class DocumentsWriterPerThread implements Accountable {
     }
   }
 
+  //要删除文件的集合
   private final Set<String> filesToDelete = new HashSet<>();
 
   Set<String> pendingFilesToDelete() {
@@ -523,6 +539,7 @@ final class DocumentsWriterPerThread implements Accountable {
     assert flushedSegment != null;
     SegmentCommitInfo newSegment = flushedSegment.segmentInfo;
 
+    //设置段 Diagnostics
     IndexWriter.setDiagnostics(newSegment.info, IndexWriter.SOURCE_FLUSH);
 
     IOContext context =
@@ -534,6 +551,7 @@ final class DocumentsWriterPerThread implements Accountable {
       if (indexWriterConfig.getUseCompoundFile()) {
         Set<String> originalFiles = newSegment.info.files();
         // TODO: like addIndexes, we are relying on createCompoundFile to successfully cleanup...
+        //创建复合文件
         IndexWriter.createCompoundFile(
             infoStream,
             new TrackingDirectoryWrapper(directory),
@@ -548,6 +566,7 @@ final class DocumentsWriterPerThread implements Accountable {
       // creating CFS so that 1) .si isn't slurped into CFS,
       // and 2) .si reflects useCompoundFile=true change
       // above:
+      //写入si文件
       codec.segmentInfoFormat().write(directory, newSegment.info, context);
 
       // TODO: ideally we would freeze newSegment here!!

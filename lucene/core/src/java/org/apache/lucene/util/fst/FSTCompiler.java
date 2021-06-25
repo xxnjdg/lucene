@@ -76,6 +76,7 @@ public class FSTCompiler<T> {
   // instead of storing the address of the target node for
   // a given arc, we mark a single bit noting that the next
   // node in the byte[] is the target node):
+  //FINAL_END_NODE
   long lastFrozenNode;
 
   // Reused temporarily while building the FST:
@@ -645,6 +646,7 @@ public class FSTCompiler<T> {
   }
 
   static final class CompiledNode implements Node {
+    //
     long node;
 
     @Override
@@ -663,7 +665,9 @@ public class FSTCompiler<T> {
     // we do when reading the FST).  Would simplify much
     // code here...
     T output;
+    //[0] = false
     boolean isFinal;
+    //[0] = 0
     long inputCount;
 
     /** This node's depth, starting from the automaton root. */

@@ -40,13 +40,19 @@ import org.apache.lucene.util.ThreadInterruptedException;
  */
 final class DocumentsWriterFlushControl implements Accountable, Closeable {
   private final long hardMaxBytesPerDWPT;
+  //执行添加/更新操作时，每一个DWPT收集到的IndexByteUsed都会被累加到activeBytes中
   private long activeBytes = 0;
+  //待写入到磁盘的索引数据量，如果全局的flush被触发，即使某个ThreadState中的DWPT达不到flush的要求，DWPT中的索引信息也会被累加到flushBytes
+  //flush中字节长度，成功后会减调
   private volatile long flushBytes = 0;
+  //0 描述了被标记为flushPending的ThreadState的个数
   private volatile int numPending = 0;
   private int numDocsSinceStalled = 0; // only with assert
   private final AtomicBoolean flushDeletes = new AtomicBoolean(false);
+  //true 全局flush是否被触发的标志 false
   private boolean fullFlush = false;
   // only for assertion that we don't get stale DWPTs from the pool
+  //true false
   private boolean fullFlushMarkDone = false;
   // The flushQueue is used to concurrently distribute DWPTs that are ready to be flushed ie. when a
   // full flush is in
@@ -54,6 +60,7 @@ final class DocumentsWriterFlushControl implements Accountable, Closeable {
   // eligible DWPTs and
   // mark them as flushable putting them in the flushQueue ready for other threads (ie. indexing
   // threads) to help flushing
+  //+ 存放DWPT的队列，即flush队列，在此队列中的DWPT等待执行doFlush操作
   private final Queue<DocumentsWriterPerThread> flushQueue = new LinkedList<>();
   // only for safety reasons if a DWPT is close to the RAM limit
   private final Queue<DocumentsWriterPerThread> blockedFlushes = new LinkedList<>();
@@ -63,6 +70,9 @@ final class DocumentsWriterFlushControl implements Accountable, Closeable {
   // already actively flushing. They are only in the state of flushing and might be picked up in the
   // future by
   // polling the flushQueue
+  //+ 该Map的key为DWPT，value为DWPT收集的索引信息的大小，当一个ThreadState被标记为flushPending，
+  // 那么它持有的DWPT对象收集到的索引信息的大小会被添加到当flushingWriters中，同样地一个DWPT执行完doFlush，
+  // 那么该DWPT对应的索引大小就可以从flushBytes扣除，故它用来维护flushBytes的值
   private final List<DocumentsWriterPerThread> flushingWriters = new ArrayList<>();
 
   private double maxConfiguredRamBuffer = 0;
@@ -72,6 +82,7 @@ final class DocumentsWriterFlushControl implements Accountable, Closeable {
   private long peakDelta = 0; // only with assert
   private boolean flushByRAMWasDisabled; // only with assert
   final DocumentsWriterStallControl stallControl = new DocumentsWriterStallControl();
+  //org.apache.lucene.index.DocumentsWriterPerThreadPool.DocumentsWriterPerThreadPool
   private final DocumentsWriterPerThreadPool perThreadPool;
   private final FlushPolicy flushPolicy;
   private boolean closed = false;
@@ -525,11 +536,13 @@ final class DocumentsWriterFlushControl implements Accountable, Closeable {
   long markForFullFlush() {
     final DocumentsWriterDeleteQueue flushingQueue;
     long seqNo;
+    //加锁
     synchronized (this) {
       assert fullFlush == false
           : "called DWFC#markForFullFlush() while full flush is still running";
       assert fullFlushMarkDone == false : "full flush collection marker is still set to true";
       fullFlush = true;
+      //前一个 deleteQueue
       flushingQueue = documentsWriter.deleteQueue;
       // Set a new delete queue - all subsequent DWPT will use this queue until
       // we do another full flush
@@ -540,15 +553,18 @@ final class DocumentsWriterFlushControl implements Accountable, Closeable {
         // Insert a gap in seqNo of current active thread count, in the worst case each of those
         // threads now have one operation in flight.  It's fine
         // if we have some sequence numbers that were never assigned:
+        //创建一个 DocumentsWriterDeleteQueue
         DocumentsWriterDeleteQueue newQueue =
             documentsWriter.deleteQueue.advanceQueue(perThreadPool.size());
         seqNo = documentsWriter.deleteQueue.getMaxSeqNo();
+        //赋值新 deleteQueue
         documentsWriter.resetDeleteQueue(newQueue);
       } finally {
         perThreadPool.unlockNewWriters();
       }
     }
     final List<DocumentsWriterPerThread> fullFlushBuffer = new ArrayList<>();
+    //找出现在符合 dwpt.deleteQueue == flushingQueue 条件的 dwpt
     for (final DocumentsWriterPerThread next :
         perThreadPool.filterAndLock(dwpt -> dwpt.deleteQueue == flushingQueue)) {
       try {
@@ -562,6 +578,7 @@ final class DocumentsWriterFlushControl implements Accountable, Closeable {
                 + " numDocsInRam: "
                 + next.getNumDocsInRAM();
 
+        //写入了文档条件就满足
         if (next.getNumDocsInRAM() > 0) {
           final DocumentsWriterPerThread flushingDWPT;
           synchronized (this) {
@@ -592,6 +609,7 @@ final class DocumentsWriterFlushControl implements Accountable, Closeable {
        * blocking indexing.*/
       pruneBlockedQueue(flushingQueue);
       assert assertBlockedFlushes(documentsWriter.deleteQueue);
+      //添加
       flushQueue.addAll(fullFlushBuffer);
       updateStallState();
       fullFlushMarkDone =

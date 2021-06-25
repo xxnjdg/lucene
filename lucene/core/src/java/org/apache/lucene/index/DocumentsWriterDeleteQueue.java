@@ -81,20 +81,25 @@ final class DocumentsWriterDeleteQueue implements Accountable, Closeable {
   // only acquired to update the global deletes, pkg-private for access by tests:
   final ReentrantLock globalBufferLock = new ReentrantLock();
 
+  //0
   final long generation;
 
   /**
    * Generates the sequence number that IW returns to callers changing the index, showing the
    * effective serialization of all operations.
    */
+  //1
   private final AtomicLong nextSeqNo;
 
   private final InfoStream infoStream;
 
   private volatile long maxSeqNo = Long.MAX_VALUE;
 
+  //1
   private final long startSeqNo;
+  //() -> 0
   private final LongSupplier previousMaxSeqId;
+  //true
   private boolean advanced;
 
   DocumentsWriterDeleteQueue(InfoStream infoStream) {

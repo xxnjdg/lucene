@@ -49,6 +49,7 @@ public final class BytesRefHash implements Accountable {
   // the following fields are needed by comparator,
   // so package private to prevent access$-methods:
   final ByteBlockPool pool;
+  // 数组下标值是ord(termId)，数组元素是在 ByteBlockPool对象的buffers[][]二维数组中的起始位置
   int[] bytesStart;
 
   private int hashSize;
@@ -56,8 +57,10 @@ public final class BytesRefHash implements Accountable {
   private int hashMask;
   private int count;
   private int lastCount = -1;
+  // 数组的下标是域值的Hash值，而数组中的元素(即是termId)是数组byteStart的下标值，而这个下标值对应的数组元素是 二维数组bytes[][]的起始位置
   private int[] ids;
   private final BytesStartArray bytesStartArray;
+  //字节使用
   private Counter bytesUsed;
 
   /**
@@ -110,6 +113,7 @@ public final class BytesRefHash implements Accountable {
   public BytesRef get(int bytesID, BytesRef ref) {
     assert bytesStart != null : "bytesStart is null - not initialized";
     assert bytesID < bytesStart.length : "bytesID exceeds byteStart len: " + bytesStart.length;
+    // 根据ord值(termID)，从bytesStart[]数组中取出在 二维数组中的位置，然后取出ord值对应的term值(ByteRef对象封装)
     pool.setBytesRef(ref, bytesStart[bytesID]);
     return ref;
   }
@@ -123,11 +127,15 @@ public final class BytesRefHash implements Accountable {
    *
    * @lucene.internal
    */
+  // 将分散在数组不同位置的元素都放到数组最前面去
   public int[] compact() {
     assert bytesStart != null : "bytesStart is null - not initialized";
+    // upto记录了数组从下标0开始第一个为-1(非法值)的下标, 用于遍历过程中当ids[i]为合法值(termID)时,跟ids[upto]进行交换
     int upto = 0;
     for (int i = 0; i < hashSize; i++) {
+      // if语句为true：说明当前元素是合法的值(termID)
       if (ids[i] != -1) {
+        // if语句为true：那么交换
         if (upto < i) {
           ids[upto] = ids[i];
           ids[i] = -1;
@@ -148,6 +156,7 @@ public final class BytesRefHash implements Accountable {
    * this {@link BytesRefHash} instance.
    */
   public int[] sort() {
+    // 将ids[]中稀疏的元素都放到数组最前面去
     final int[] compact = compact();
     new StringMSBRadixSorter() {
 
@@ -250,44 +259,59 @@ public final class BytesRefHash implements Accountable {
     final int hashPos = findHash(bytes);
     int e = ids[hashPos];
 
+    // if语句true: ids数组中没有存放过这个bytes, 是一个new entry
     if (e == -1) {
       // new entry
       final int len2 = 2 + bytes.length;
+      // BYTE_BLOCK_SIZE的大小是 1 << 15 ;
+      // byteUpto表示在head buffer中的位置(用来体现head buffer的使用量)
       if (len2 + pool.byteUpto > BYTE_BLOCK_SIZE) {
+        // if语句true: bytes(域值)长度太长了, 超过了一个head buffer的长度,
         if (len2 > BYTE_BLOCK_SIZE) {
           throw new MaxBytesLengthExceededException(
               "bytes can be at most " + (BYTE_BLOCK_SIZE - 2) + " in length; got " + bytes.length);
         }
+        // 重新分配一个二维数组，并且将旧的二维数组的值赋值到新的二维数组中
         pool.nextBuffer();
       }
+      // 获取当前的head buffer
       final byte[] buffer = pool.buffer;
+      // bufferUpto用来描述head buffer当前使用量
       final int bufferUpto = pool.byteUpto;
       if (count >= bytesStart.length) {
         bytesStart = bytesStartArray.grow();
         assert count < bytesStart.length + 1 : "count: " + count + " len: " + bytesStart.length;
       }
+      // count是一个递增的值, 给从未出现过的域值提供一个值，这个值是bytesStart数组的下标，对应的数组元素是在二维数组byte[][]中的起始位置
       e = count++;
 
+      // 数组元素是 二维数组byte[][]中的一个起始位置, 这个二维数组用来存放域值（不会重复存放相同的域值）
       bytesStart[e] = bufferUpto + pool.byteOffset;
 
       // We first encode the length, followed by the
       // bytes. Length is encoded as vInt, but will consume
       // 1 or 2 bytes at most (we reject too-long terms,
       // above).
+      // length描述了用ByteRef对象描述的term需要占用的字节个数
       if (length < 128) {
         // 1 byte to store length
         buffer[bufferUpto] = (byte) length;
+        // length + 1表示要占用head buffer的长度，其中1就是存放域值长度值所需要的一个字节大小
         pool.byteUpto += length + 1;
         assert length >= 0 : "Length must be positive: " + length;
+        // 将用ByteRef对象表示的term值写到buffer[]数组中
         System.arraycopy(bytes.bytes, bytes.offset, buffer, bufferUpto + 1, length);
       } else {
         // 2 byte to store length
         buffer[bufferUpto] = (byte) (0x80 | (length & 0x7f));
         buffer[bufferUpto + 1] = (byte) ((length >> 7) & 0xff);
+        // length + 2表示要占用head buffer的长度，其中2就是存放域值长度值所需要的一个字节大小,
+        // 注意域值(用ByteRef表示)的长度肯定小于 1 << 15（前面已经做了判断）, 所以只要2个字节就能存储
         pool.byteUpto += length + 2;
         System.arraycopy(bytes.bytes, bytes.offset, buffer, bufferUpto + 2, length);
       }
       assert ids[hashPos] == -1;
+      // ids数组，下标是域值的hash值，而对应的数组元素是在byteStart数组的下标值，通过这个下标对应的数组元素就能找到在byte[][]二维数组的起始位置
       ids[hashPos] = e;
 
       if (count == hashHalfSize) {
@@ -295,6 +319,7 @@ public final class BytesRefHash implements Accountable {
       }
       return e;
     }
+    // 这里上下的两个return分别返回一个负数跟正数，为了区分当前处理的这个域值是不是第一次处理，是的话返回一个正数
     return -(e + 1);
   }
 
@@ -311,12 +336,14 @@ public final class BytesRefHash implements Accountable {
   private int findHash(BytesRef bytes) {
     assert bytesStart != null : "bytesStart is null - not initialized";
 
+    // 使用murmurhash3_x86_32方法获得Hash值
     int code = doHash(bytes.bytes, bytes.offset, bytes.length);
 
     // final position
     int hashPos = code & hashMask;
     int e = ids[hashPos];
     if (e != -1 && !equals(e, bytes)) {
+      // ids数组中hashPos这个下标已经有一个值并且跟参数bytes的值不一样，说明发生了冲突, 然后使用线性探测法找到一个可用的位置
       // Conflict; use linear probe to find an open slot
       // (see LUCENE-5604):
       do {

@@ -65,6 +65,7 @@ public class AttributeSource {
   private final Map<Class<? extends AttributeImpl>, AttributeImpl> attributeImpls;
   private final State[] currentState;
 
+  //DEFAULT_TOKEN_ATTRIBUTE_FACTORY
   private final AttributeFactory factory;
 
   /**

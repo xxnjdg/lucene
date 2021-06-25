@@ -78,8 +78,10 @@ import org.apache.lucene.util.InfoStream;
  * that the document is always atomically ("all or none") added to the index.
  */
 final class DocumentsWriter implements Closeable, Accountable {
+  //0
   private final AtomicLong pendingNumDocs;
 
+  //org.apache.lucene.index.IndexWriter.flushNotifications
   private final FlushNotifications flushNotifications;
 
   private volatile boolean closed;
@@ -91,6 +93,7 @@ final class DocumentsWriter implements Closeable, Accountable {
   private final AtomicInteger numDocsInRAM = new AtomicInteger(0);
 
   // TODO: cut over to BytesRefHash in BufferedDeletes
+  //DocumentsWriterDeleteQueue
   volatile DocumentsWriterDeleteQueue deleteQueue;
   private final DocumentsWriterFlushQueue ticketQueue = new DocumentsWriterFlushQueue();
   /*
@@ -413,12 +416,14 @@ final class DocumentsWriter implements Closeable, Accountable {
     return hasEvents;
   }
 
+  //delNode = null
   long updateDocuments(
       final Iterable<? extends Iterable<? extends IndexableField>> docs,
       final DocumentsWriterDeleteQueue.Node<?> delNode)
       throws IOException {
     boolean hasEvents = preUpdate();
 
+    //获取 DocumentsWriterPerThread
     final DocumentsWriterPerThread dwpt = flushControl.obtainAndLock();
     final DocumentsWriterPerThread flushingDWPT;
     long seqNo;
@@ -489,6 +494,7 @@ final class DocumentsWriter implements Closeable, Accountable {
         try {
           assert assertTicketQueueModification(flushingDWPT.deleteQueue);
           // Each flush is assigned a ticket in the order they acquire the ticketQueue lock
+          //创建 DocumentsWriterFlushQueue.FlushTicket
           ticket = ticketQueue.addFlushTicket(flushingDWPT);
           final int flushingDocsInRam = flushingDWPT.getNumDocsInRAM();
           boolean dwptSuccess = false;
@@ -500,6 +506,7 @@ final class DocumentsWriter implements Closeable, Accountable {
           } finally {
             subtractFlushedNumDocs(flushingDocsInRam);
             if (flushingDWPT.pendingFilesToDelete().isEmpty() == false) {
+              //获取要删除文件的集合
               Set<String> files = flushingDWPT.pendingFilesToDelete();
               flushNotifications.deleteUnusedFiles(files);
               hasEvents = true;
@@ -539,6 +546,7 @@ final class DocumentsWriter implements Closeable, Accountable {
       flushingDWPT = flushControl.nextPendingFlush();
     }
 
+    //处理事件
     if (hasEvents) {
       flushNotifications.afterSegmentsFlushed();
     }
@@ -656,7 +664,9 @@ final class DocumentsWriter implements Closeable, Accountable {
     }
 
     long seqNo;
+    //加锁
     synchronized (this) {
+      //是否有改变
       pendingChangesInCurrentFullFlush = anyChanges();
       flushingDeleteQueue = deleteQueue;
       /* Cutover to a new delete queue.  This must be synced on the flush control
@@ -672,6 +682,7 @@ final class DocumentsWriter implements Closeable, Accountable {
     try {
       DocumentsWriterPerThread flushingDWPT;
       // Help out with flushing:
+      //从 flushQueue 取出 DocumentsWriterPerThread
       while ((flushingDWPT = flushControl.nextPendingFlush()) != null) {
         anythingFlushed |= doFlush(flushingDWPT);
       }
@@ -692,6 +703,7 @@ final class DocumentsWriter implements Closeable, Accountable {
       assert !flushingDeleteQueue.anyChanges();
     } finally {
       assert flushingDeleteQueue == currentFullFlushDelQueue;
+      //关闭旧删除队列
       flushingDeleteQueue
           .close(); // all DWPT have been processed and this queue has been fully flushed to the
       // ticket-queue

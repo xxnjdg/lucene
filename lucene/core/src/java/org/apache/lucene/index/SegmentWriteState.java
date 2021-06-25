@@ -68,12 +68,14 @@ public class SegmentWriteState {
    * <p>Note: the suffix must be either empty, or be a textual suffix contain exactly two parts
    * (separated by underscore), or be a base36 generation.
    */
+  //""
   public final String segmentSuffix;
 
   /**
    * {@link IOContext} for all writes; you should pass this to {@link
    * Directory#createOutput(String,IOContext)}.
    */
+  //new IOContext(new FlushInfo(numDocsInRAM, lastCommittedBytesUsed))
   public final IOContext context;
 
   /** Sole constructor. */

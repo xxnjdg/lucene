@@ -55,10 +55,12 @@ final class ReadersAndUpdates {
   private final AtomicInteger refCount = new AtomicInteger(1);
 
   // Set once (null, and then maybe set, and never set again):
+  //
   private SegmentReader reader;
 
   // How many further deletions we've done against
   // liveDocs vs when we loaded it or last wrote it:
+  //PendingDeletes
   private final PendingDeletes pendingDeletes;
 
   // the major version this index was created with

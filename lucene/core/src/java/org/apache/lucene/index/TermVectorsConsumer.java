@@ -49,6 +49,7 @@ class TermVectorsConsumer extends TermsHash {
   final ByteSliceReader vectorSliceReaderOff = new ByteSliceReader();
 
   private boolean hasVectors;
+  //0
   private int numVectorFields;
   int lastDocID;
   private TermVectorsConsumerPerField[] perFields = new TermVectorsConsumerPerField[1];

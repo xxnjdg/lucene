@@ -85,6 +85,7 @@ public class SearchFiles {
       }
     }
 
+    //创建  StandardDirectoryReader
     IndexReader reader = DirectoryReader.open(FSDirectory.open(Paths.get(index)));
     IndexSearcher searcher = new IndexSearcher(reader);
     Analyzer analyzer = new StandardAnalyzer();

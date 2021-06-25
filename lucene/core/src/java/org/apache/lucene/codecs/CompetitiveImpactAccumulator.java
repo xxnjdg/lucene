@@ -71,6 +71,7 @@ public final class CompetitiveImpactAccumulator {
   public void add(int freq, long norm) {
     if (norm >= Byte.MIN_VALUE && norm <= Byte.MAX_VALUE) {
       int index = Byte.toUnsignedInt((byte) norm);
+      //算出不同长度的最大词频
       maxFreqs[index] = Math.max(maxFreqs[index], freq);
     } else {
       add(new Impact(freq, norm), otherFreqNormPairs);

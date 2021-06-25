@@ -66,28 +66,36 @@ public final class Lucene90PostingsWriter extends PushPostingsWriterBase {
   private long posStartFP;
   private long payStartFP;
 
+  //存 docID 差值存储
   final long[] docDeltaBuffer;
+  //词频数组
   final long[] freqBuffer;
+  //freqBuffer 和 docDeltaBuffer 数组使用指针
   private int docBufferUpto;
 
+  //位置数组，差值存储,
   final long[] posDeltaBuffer;
   final long[] payloadLengthBuffer;
   final long[] offsetStartDeltaBuffer;
   final long[] offsetLengthBuffer;
+  //posDeltaBuffer 数组下标指针
   private int posBufferUpto;
 
   private byte[] payloadBytes;
   private int payloadByteUpto;
 
+  //-1
   private int lastBlockDocID;
   private long lastBlockPosFP;
   private long lastBlockPayFP;
   private int lastBlockPosBufferUpto;
   private int lastBlockPayloadByteUpto;
 
+  //0
   private int lastDocID;
   private int lastPosition;
   private int lastStartOffset;
+  //
   private int docCount;
 
   private final PForUtil pforUtil;
@@ -233,6 +241,7 @@ public final class Lucene90PostingsWriter extends PushPostingsWriterBase {
       competitiveFreqNormAccumulator.clear();
     }
 
+    //差值
     final int docDelta = docID - lastDocID;
 
     if (docID < 0 || (docCount > 0 && docDelta <= 0)) {
@@ -263,6 +272,7 @@ public final class Lucene90PostingsWriter extends PushPostingsWriterBase {
     lastStartOffset = 0;
 
     long norm;
+    //如果有norms
     if (fieldHasNorms) {
       boolean found = norms.advanceExact(docID);
       if (found == false) {
@@ -297,6 +307,7 @@ public final class Lucene90PostingsWriter extends PushPostingsWriterBase {
       throw new CorruptIndexException("position=" + position + " is < 0", docOut);
     }
     posDeltaBuffer[posBufferUpto] = position - lastPosition;
+    //是否写入 Payloads
     if (writePayloads) {
       if (payload == null || payload.length == 0) {
         // no payload
@@ -312,6 +323,7 @@ public final class Lucene90PostingsWriter extends PushPostingsWriterBase {
       }
     }
 
+    //是否写入 Offsets
     if (writeOffsets) {
       assert startOffset >= lastStartOffset;
       assert endOffset >= startOffset;
@@ -495,12 +507,15 @@ public final class Lucene90PostingsWriter extends PushPostingsWriterBase {
       final long delta = (long) state.singletonDocID - lastState.singletonDocID;
       out.writeVLong((BitUtil.zigZagEncode(delta) << 1) | 0x01);
     } else {
+      //记录 _0_Lucene90_0.doc 偏移
       out.writeVLong((state.docStartFP - lastState.docStartFP) << 1);
+      //如果只有一个doc，记录
       if (state.singletonDocID != -1) {
         out.writeVInt(state.singletonDocID);
       }
     }
 
+    //记录位置
     if (writePositions) {
       out.writeVLong(state.posStartFP - lastState.posStartFP);
       if (writePayloads || writeOffsets) {

@@ -68,6 +68,7 @@ final class IndexFileDeleter implements Closeable {
   /* Reference count for all files in the index.
    * Counts how many existing commits reference a file.
    **/
+  //
   private Map<String, RefCount> refCounts = new HashMap<>();
 
   /* Holds all commits (segments_N) currently in the index.
@@ -75,10 +76,12 @@ final class IndexFileDeleter implements Closeable {
    * default delete policy (KeepOnlyLastCommitDeletionPolicy).
    * Other policies may leave commit points live for longer
    * in which case this list would be longer than 1: */
+  //
   private List<CommitPoint> commits = new ArrayList<>();
 
   /* Holds files we had incref'd from the previous
    * non-commit checkpoint: */
+  //cfs si cfe
   private final List<String> lastFiles = new ArrayList<>();
 
   /* Commits that the IndexDeletionPolicy have decided to delete: */
@@ -90,6 +93,7 @@ final class IndexFileDeleter implements Closeable {
   private final IndexDeletionPolicy policy;
 
   final boolean startingCommitDeleted;
+  //从索引文件读出的 SegmentInfos
   private SegmentInfos lastSegmentInfos;
 
   /** Change to true to see details of reference counts when infoStream is enabled */
@@ -106,6 +110,7 @@ final class IndexFileDeleter implements Closeable {
    * Initialize the deleter: find all previous commits in the Directory, incref the files they
    * reference, call the policy to let it delete commits. This will remove any files not referenced
    * by any of the commits.
+   * 初始化删除器：在目录中找到所有以前的提交，增加它们引用的文件，调用策略让它删除提交。 这将删除任何提交未引用的任何文件。
    *
    * @throws IOException if there is a low-level IO error
    */
@@ -141,20 +146,24 @@ final class IndexFileDeleter implements Closeable {
 
     // First pass: walk the files and initialize our ref
     // counts:
+    //当前 CommitPoint
     CommitPoint currentCommitPoint = null;
 
     if (currentSegmentsFile != null) {
       Matcher m = IndexFileNames.CODEC_FILE_PATTERN.matcher("");
       for (String fileName : files) {
         m.reset(fileName);
+        //排除 write.lock
         if (!fileName.endsWith("write.lock")
             && (m.matches()
                 || fileName.startsWith(IndexFileNames.SEGMENTS)
                 || fileName.startsWith(IndexFileNames.PENDING_SEGMENTS))) {
 
           // Add this file to refCounts with initial count 0:
+          //初始化索引文件引用计数0
           getRefCount(fileName);
 
+          //找出 segments 文件
           if (fileName.startsWith(IndexFileNames.SEGMENTS)) {
 
             // This is a commit (segments or segments_N), and
@@ -163,13 +172,16 @@ final class IndexFileDeleter implements Closeable {
             if (infoStream.isEnabled("IFD")) {
               infoStream.message("IFD", "init: load commit \"" + fileName + "\"");
             }
+            //从索引文件读取 SegmentInfos
             SegmentInfos sis = SegmentInfos.readCommit(directoryOrig, fileName);
 
+            //创建 CommitPoint
             final CommitPoint commitPoint = new CommitPoint(commitsToDelete, directoryOrig, sis);
             if (sis.getGeneration() == segmentInfos.getGeneration()) {
               currentCommitPoint = commitPoint;
             }
             commits.add(commitPoint);
+            //增加引用
             incRef(sis, true);
 
             if (lastSegmentInfos == null
@@ -219,11 +231,13 @@ final class IndexFileDeleter implements Closeable {
       relevantFiles.addAll(pendingDeletions);
     }
     // refCounts only includes "normal" filenames (does not include write.lock)
+    //refCounts 仅包括“普通”文件名（不包括 write.lock）
     inflateGens(segmentInfos, relevantFiles, infoStream);
 
     // Now delete anything with ref count at 0.  These are
     // presumably abandoned files eg due to crash of
     // IndexWriter.
+    //现在删除引用计数为 0 的任何内容。这些可能是由于 IndexWriter 崩溃而被遗弃的文件。
     Set<String> toDelete = new HashSet<>();
     for (Map.Entry<String, RefCount> entry : refCounts.entrySet()) {
       RefCount rc = entry.getValue();
@@ -245,10 +259,12 @@ final class IndexFileDeleter implements Closeable {
 
     // Finally, give policy a chance to remove things on
     // startup:
+    //最后，让政策有机会在启动时删除内容：
     policy.onInit(commits);
 
     // Always protect the incoming segmentInfos since
     // sometime it may not be the most recent commit
+    //始终保护传入的 segmentInfos，因为有时它可能不是最近的提交
     checkpoint(segmentInfos, false);
 
     if (currentCommitPoint == null) {
@@ -277,6 +293,7 @@ final class IndexFileDeleter implements Closeable {
     // codec which file is which:
     Map<String, Long> maxPerSegmentGen = new HashMap<>();
 
+    //读取最大 maxSegmentGen
     for (String fileName : files) {
       if (fileName.equals(IndexWriter.WRITE_LOCK_NAME)) {
         // do nothing
@@ -331,6 +348,7 @@ final class IndexFileDeleter implements Closeable {
     }
 
     // Generation is advanced before write:
+    //从新设置 generation
     infos.setNextWriteGeneration(Math.max(infos.getGeneration(), maxSegmentGen));
     if (infos.counter < 1 + maxSegmentName) {
       if (infoStream.isEnabled("IFD")) {
@@ -571,6 +589,7 @@ final class IndexFileDeleter implements Closeable {
     }
 
     // Incref the files:
+    //2 1
     incRef(segmentInfos, isCommit);
 
     if (isCommit) {
@@ -720,6 +739,7 @@ final class IndexFileDeleter implements Closeable {
     deleteFiles(toDelete);
   }
 
+  //删除文件
   private void deleteFiles(Collection<String> names) throws IOException {
     assert locked();
     ensureOpen();
@@ -771,13 +791,16 @@ final class IndexFileDeleter implements Closeable {
   private static final class RefCount {
 
     // fileName used only for better assert error messages
+    //文件名
     final String fileName;
+    //true
     boolean initDone;
 
     RefCount(String fileName) {
       this.fileName = fileName;
     }
 
+    //1
     int count;
 
     public int IncRef() {
@@ -809,13 +832,18 @@ final class IndexFileDeleter implements Closeable {
    */
   private static final class CommitPoint extends IndexCommit {
 
+    //所有的索引文件，包括 segmentInfos
     Collection<String> files;
+    //段名字
     String segmentsFileName;
     boolean deleted;
     Directory directoryOrig;
+    //null
     Collection<CommitPoint> commitsToDelete;
+    //段 generation
     long generation;
     final Map<String, String> userData;
+    //段长度
     private final int segmentCount;
 
     public CommitPoint(

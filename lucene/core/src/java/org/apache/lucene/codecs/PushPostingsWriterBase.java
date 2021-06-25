@@ -120,6 +120,7 @@ public abstract class PushPostingsWriterBase extends PostingsWriterBase {
     if (fieldInfo.hasNorms() == false) {
       normValues = null;
     } else {
+      //
       normValues = norms.getNorms(fieldInfo);
     }
     startTerm(normValues);
@@ -129,14 +130,17 @@ public abstract class PushPostingsWriterBase extends PostingsWriterBase {
     int docFreq = 0;
     long totalTermFreq = 0;
     while (true) {
+      //获取出现该 term 的下一个 docID
       int docID = postingsEnum.nextDoc();
       if (docID == PostingsEnum.NO_MORE_DOCS) {
         break;
       }
       docFreq++;
+      //设置文档号位图数组
       docsSeen.set(docID);
       int freq;
       if (writeFreqs) {
+        //获取词频
         freq = postingsEnum.freq();
         totalTermFreq += freq;
       } else {
@@ -144,9 +148,12 @@ public abstract class PushPostingsWriterBase extends PostingsWriterBase {
       }
       startDoc(docID, freq);
 
+      //是否要记录term位置
       if (writePositions) {
         for (int i = 0; i < freq; i++) {
+          //读取term位置
           int pos = postingsEnum.nextPosition();
+          //是否有payload
           BytesRef payload = writePayloads ? postingsEnum.getPayload() : null;
           int startOffset;
           int endOffset;
@@ -170,6 +177,7 @@ public abstract class PushPostingsWriterBase extends PostingsWriterBase {
       BlockTermState state = newTermState();
       state.docFreq = docFreq;
       state.totalTermFreq = writeFreqs ? totalTermFreq : -1;
+      //写入pos doc 文件写入文档号和term位置
       finishTerm(state);
       return state;
     }

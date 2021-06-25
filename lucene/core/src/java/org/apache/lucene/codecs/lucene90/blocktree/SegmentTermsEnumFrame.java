@@ -29,6 +29,7 @@ import org.apache.lucene.util.fst.FST;
 
 final class SegmentTermsEnumFrame {
   // Our index in stack[]:
+  //-1 0
   final int ord;
 
   boolean hasTerms;
@@ -40,19 +41,28 @@ final class SegmentTermsEnumFrame {
   // static boolean DEBUG = BlockTreeTermsWriter.DEBUG;
 
   // File pointer where this block was loaded from
+  //加载此块的文件指针
   long fp;
   long fpOrig;
+  //此块的文件位指针
   long fpEnd;
+  //term字符串和长度数组长度
   long totalSuffixBytes; // for stats
 
+  //term所有字符串
   byte[] suffixBytes = new byte[128];
+  //suffixBytes
   final ByteArrayDataInput suffixesReader = new ByteArrayDataInput();
 
+  //所有term 长度数组
   byte[] suffixLengthBytes;
+  //suffixLengthBytes
   final ByteArrayDataInput suffixLengthsReader;
 
+  //docFerq 和 词频 数组
   byte[] statBytes = new byte[64];
   int statsSingletonRunLength = 0;
+  //statBytes
   final ByteArrayDataInput statsReader = new ByteArrayDataInput();
 
   byte[] floorData = new byte[32];
@@ -62,6 +72,7 @@ final class SegmentTermsEnumFrame {
   int prefix;
 
   // Number of entries (term or sub-block) in this block
+  //域名所有term数量
   int entCount;
 
   // Which term we will next read, or -1 if the block
@@ -70,6 +81,7 @@ final class SegmentTermsEnumFrame {
 
   // True if this block is either not a floor block,
   // or, it's the last sub-block of a floor block
+  //如果此块不是地板块，则为真
   boolean isLastInFloor;
 
   // True if all entries are terms
@@ -87,10 +99,13 @@ final class SegmentTermsEnumFrame {
   // metaData
   int metaDataUpto;
 
+  //new IntBlockTermState()
   final BlockTermState state;
 
   // metadata buffer
+  //文档号文件和位置文件偏移
   byte[] bytes = new byte[32];
+  //bytes
   final ByteArrayDataInput bytesReader = new ByteArrayDataInput();
 
   private final SegmentTermsEnum ste;
@@ -156,6 +171,7 @@ final class SegmentTermsEnumFrame {
     }
     // System.out.println("blc=" + blockLoadCount);
 
+    //tim文件移动到fp位置
     ste.in.seek(fp);
     int code = ste.in.readVInt();
     entCount = code >>> 1;
@@ -530,7 +546,9 @@ final class SegmentTermsEnumFrame {
     return isLeafBlock ? scanToTermLeaf(target, exactOnly) : scanToTermNonLeaf(target, exactOnly);
   }
 
+  //term 起始位
   private int startBytePos;
+  //term 长度
   private int suffix;
   private long subCode;
   CompressionAlgorithm compressionAlg = CompressionAlgorithm.NO_COMPRESSION;
@@ -593,6 +611,7 @@ final class SegmentTermsEnumFrame {
       suffixesReader.skipBytes(suffix);
 
       // Loop over bytes in the suffix, comparing to the target
+      //target 和 term 比较
       final int cmp =
           Arrays.compareUnsigned(
               suffixBytes,

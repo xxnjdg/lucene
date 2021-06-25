@@ -415,6 +415,7 @@ class FreqProxFields extends Fields {
     int endOffset;
     int posLeft;
     int termID;
+    //false
     boolean ended;
     boolean hasPayload;
     BytesRefBuilder payload = new BytesRefBuilder();

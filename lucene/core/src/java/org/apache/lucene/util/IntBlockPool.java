@@ -59,15 +59,20 @@ public final class IntBlockPool {
    * array of buffers currently used in the pool. Buffers are allocated if needed don't modify this
    * outside of this class
    */
+  // 也就是一个有10层一维数组的二维数组，同一时刻10层中的某一层用来存储数据，并且这一层就是 head buffer(定义)
   public int[][] buffers = new int[10][];
 
   /** index into the buffers array pointing to the current buffer used as the head */
+  // 默认buffers是一个int[10][]二维数组，也就是有10个一维数组，bufferUpto表示正在使用第几个一维数组，并且这个一维数组就是head buffer
   private int bufferUpto = -1;
   /** Pointer to the current position in head buffer */
+  // 描述head buffer中被使用的位置(一维数组下标值), 此位置之前的数组空间都被使用过了
   public int intUpto = INT_BLOCK_SIZE;
   /** Current head buffer */
+  // 当前正在使用的buffer，也就是head buffer
   public int[] buffer;
   /** Current head offset */
+  // 在head buffer 在二维数组中的偏移
   public int intOffset = -INT_BLOCK_SIZE;
 
   private final Allocator allocator;
@@ -147,15 +152,20 @@ public final class IntBlockPool {
    * advance the pool to its first buffer immediately.
    */
   public void nextBuffer() {
+    // 判断二维数组是否存储已满，那么就扩容，并且扩容结束后，迁移数据
     if (1 + bufferUpto == buffers.length) {
       int[][] newBuffers = new int[(int) (buffers.length * 1.5)][];
       System.arraycopy(buffers, 0, newBuffers, 0, buffers.length);
       buffers = newBuffers;
     }
+    // 生成一个新的一维数组
     buffer = buffers[1 + bufferUpto] = allocator.getIntBlock();
+    // 更新bufferUpto，这个值描述了我们当前正在使用第bufferUpto个一维数组。
     bufferUpto++;
 
+    // head buffer数组的可使用位置(下标值)置为0
     intUpto = 0;
+    // 更新intOffset的值，表示在二维数组中可用的位置。
     intOffset += INT_BLOCK_SIZE;
   }
 
@@ -164,14 +174,19 @@ public final class IntBlockPool {
    *
    * @see SliceReader
    */
+  // 需要分配size大小的分片。
   private int newSlice(final int size) {
+    // 判断当前的head buffer空间是否充足，如果不够的话，就用分配新的head buffer来存储。
     if (intUpto > INT_BLOCK_SIZE - size) {
+      // 空间不足的话，分配一个新的一维数组。
       nextBuffer();
       assert assertSliceBuffer(buffer);
     }
 
     final int upto = intUpto;
+    // 分配size个大小的数组空间给这次的存储,然后intUpto更新
     intUpto += size;
+    // 指定下次分片的级别
     buffer[intUpto - 1] = 1;
     return upto;
   }
@@ -200,8 +215,11 @@ public final class IntBlockPool {
 
   /** Allocates a new slice from the given offset */
   private int allocSlice(final int[] slice, final int sliceOffset) {
+    // 取出分片的层级
     final int level = slice[sliceOffset];
+    // 获得新的分片的层级
     final int newLevel = NEXT_LEVEL_ARRAY[level - 1];
+    // 根据新的分片的层级，获得新分片的大小
     final int newSize = LEVEL_SIZE_ARRAY[newLevel];
     // Maybe allocate another block
     if (intUpto > INT_BLOCK_SIZE - newSize) {
@@ -228,6 +246,7 @@ public final class IntBlockPool {
    * @see SliceReader
    * @lucene.internal
    */
+  // 同一个域名的所有域值的信息都写在同一个二维数组中的不同的位置, 并且一个域值的所有信息并不是连续存储的。所以这里用 slices 来表示一个域值的所有信息
   public static class SliceWriter {
 
     private int offset;

@@ -53,6 +53,7 @@ final class SegmentCoreReaders {
   // SegmentReaders:
   private final AtomicInteger ref = new AtomicInteger(1);
 
+  //FieldsReader
   final FieldsProducer fields;
   final NormsProducer normsProducer;
 
@@ -60,12 +61,15 @@ final class SegmentCoreReaders {
   final TermVectorsReader termVectorsReaderOrig;
   final PointsReader pointsReader;
   final VectorReader vectorReader;
+  //Lucene90CompoundReader
   final CompoundDirectory cfsReader;
+  //段名字
   final String segment;
   /**
    * fieldinfos for this core: means gen=-1. this is the exact fieldinfos these codec components saw
    * at write. in the case of DV updates, SR may hold a newer version.
    */
+  //new FieldInfos(infos)
   final FieldInfos coreFieldInfos;
 
   // TODO: make a single thread local w/ a
@@ -108,6 +112,7 @@ final class SegmentCoreReaders {
 
       segment = si.info.name;
 
+      //new FieldInfos(infos)
       coreFieldInfos = codec.fieldInfosFormat().read(cfsDir, si.info, "", context);
 
       final SegmentReadState segmentReadState =

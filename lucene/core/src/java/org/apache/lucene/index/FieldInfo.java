@@ -27,8 +27,10 @@ import java.util.Objects;
  */
 public final class FieldInfo {
   /** Field's name */
+  //域名，唯一
   public final String name;
   /** Internal field number */
+  //-1 字段号码自增
   public final int number;
 
   private DocValuesType docValuesType = DocValuesType.NONE;
@@ -43,6 +45,7 @@ public final class FieldInfo {
 
   private final Map<String, String> attributes;
 
+  //-1
   private long dvGen;
 
   /**

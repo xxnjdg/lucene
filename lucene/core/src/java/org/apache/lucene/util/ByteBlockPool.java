@@ -110,16 +110,21 @@ public final class ByteBlockPool implements Accountable {
    * array of buffers currently used in the pool. Buffers are allocated if needed don't modify this
    * outside of this class.
    */
+  //buffers[0][] = 1<<15
   public byte[][] buffers = new byte[10][];
 
   /** index into the buffers array pointing to the current buffer used as the head */
+  //0
   private int bufferUpto = -1; // Which buffer we are upto
   /** Where we are in head buffer */
+  // byteUpto表示在head buffer中的位置(用来体现head buffer的使用量)
   public int byteUpto = BYTE_BLOCK_SIZE;
 
   /** Current head buffer */
+  //buffer = buffers[0][]
   public byte[] buffer;
   /** Current head offset */
+  //0
   public int byteOffset = -BYTE_BLOCK_SIZE;
 
   private final Allocator allocator;

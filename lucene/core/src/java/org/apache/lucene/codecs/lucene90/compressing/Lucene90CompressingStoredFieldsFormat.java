@@ -43,11 +43,17 @@ import org.apache.lucene.util.packed.DirectMonotonicWriter;
  */
 public class Lucene90CompressingStoredFieldsFormat extends StoredFieldsFormat {
 
+  //"Lucene90StoredFieldsFastData"
   private final String formatName;
+  //""
   private final String segmentSuffix;
+  //BEST_SPEED_MODE
   private final CompressionMode compressionMode;
+  //BEST_SPEED_BLOCK_LENGTH
   private final int chunkSize;
+  //1024
   private final int maxDocsPerChunk;
+  //10
   private final int blockShift;
 
   /**
@@ -56,6 +62,7 @@ public class Lucene90CompressingStoredFieldsFormat extends StoredFieldsFormat {
    * @see Lucene90CompressingStoredFieldsFormat#Lucene90CompressingStoredFieldsFormat(String,
    *     String, CompressionMode, int, int, int)
    */
+  //"Lucene90StoredFieldsFastData", BEST_SPEED_MODE, BEST_SPEED_BLOCK_LENGTH, 1024, 10
   public Lucene90CompressingStoredFieldsFormat(
       String formatName,
       CompressionMode compressionMode,
@@ -96,6 +103,7 @@ public class Lucene90CompressingStoredFieldsFormat extends StoredFieldsFormat {
    * @param blockShift the log in base 2 of number of chunks to store in an index block
    * @see CompressionMode
    */
+  //"Lucene90StoredFieldsFastData", BEST_SPEED_MODE, BEST_SPEED_BLOCK_LENGTH, 1024, 10
   public Lucene90CompressingStoredFieldsFormat(
       String formatName,
       String segmentSuffix,
@@ -134,6 +142,7 @@ public class Lucene90CompressingStoredFieldsFormat extends StoredFieldsFormat {
         directory, si, segmentSuffix, fn, context, formatName, compressionMode);
   }
 
+  //IOContext.DEFAULT
   @Override
   public StoredFieldsWriter fieldsWriter(Directory directory, SegmentInfo si, IOContext context)
       throws IOException {

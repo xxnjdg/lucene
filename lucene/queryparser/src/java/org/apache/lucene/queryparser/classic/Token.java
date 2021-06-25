@@ -44,6 +44,7 @@ public class Token implements java.io.Serializable {
    * token.  Otherwise, see below for a description of the contents of
    * this field.
    */
+  //token = are jj_scanpos = ""
   public Token next;
 
   /**

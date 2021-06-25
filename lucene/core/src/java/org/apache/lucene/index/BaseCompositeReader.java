@@ -46,11 +46,14 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @lucene.internal
  */
 public abstract class BaseCompositeReader<R extends IndexReader> extends CompositeReader {
+  //SegmentReader
   private final R[] subReaders;
   /** A comparator for sorting sub-readers */
   protected final Comparator<R> subReadersSorter;
 
+  //0 2
   private final int[] starts; // 1st docno for each reader
+  //2
   private final int maxDoc;
   private AtomicInteger numDocs = new AtomicInteger(-1); // computed lazily
 
@@ -58,6 +61,7 @@ public abstract class BaseCompositeReader<R extends IndexReader> extends Composi
    * List view solely for {@link #getSequentialSubReaders()}, for effectiveness the array is used
    * internally.
    */
+  //SegmentReader
   private final List<R> subReadersList;
 
   /**

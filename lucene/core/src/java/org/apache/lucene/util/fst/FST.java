@@ -133,6 +133,7 @@ public final class FST<T> implements Accountable {
 
   // if non-null, this FST accepts the empty string and
   // produces this output
+  //[-38,1]
   T emptyOutput;
 
   /**
@@ -143,6 +144,7 @@ public final class FST<T> implements Accountable {
 
   private final FSTStore fstStore;
 
+  //0
   private long startNode = -1;
 
   public final Outputs<T> outputs;
@@ -156,12 +158,16 @@ public final class FST<T> implements Accountable {
 
     private int label;
 
+    //NO_OUTPUT
     private T output;
 
+    //0
     private long target;
 
+    //BIT_FINAL_ARC | BIT_LAST_ARC |BIT_ARC_HAS_FINAL_OUTPUT
     private byte flags;
 
+    //
     private T nextFinalOutput;
 
     private long nextArc;

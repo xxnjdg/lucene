@@ -66,6 +66,7 @@ public abstract class QueryParserBase extends QueryBuilder
   MultiTermQuery.RewriteMethod multiTermRewriteMethod = MultiTermQuery.CONSTANT_SCORE_REWRITE;
   boolean allowLeadingWildcard = false;
 
+  //需要搜索的域名
   protected String field;
   int phraseSlop = 0;
   float fuzzyMinSim = FuzzyQuery.defaultMaxEdits;

@@ -31,6 +31,7 @@ final class DocsWithFieldSet extends DocIdSet {
   private static long BASE_RAM_BYTES_USED =
       RamUsageEstimator.shallowSizeOfInstance(DocsWithFieldSet.class);
 
+  //docId 位置数组
   private FixedBitSet set;
   private int cost = 0;
   private int lastDocId = -1;

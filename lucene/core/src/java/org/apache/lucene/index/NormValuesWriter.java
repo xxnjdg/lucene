@@ -69,6 +69,7 @@ class NormValuesWriter {
 
   public void flush(SegmentWriteState state, Sorter.DocMap sortMap, NormsConsumer normsConsumer)
       throws IOException {
+    //构建 norms
     final PackedLongValues values = pending.build();
     final NumericDocValuesWriter.NumericDVs sorted;
     if (sortMap != null) {
@@ -80,6 +81,7 @@ class NormValuesWriter {
     } else {
       sorted = null;
     }
+    //写入norm
     normsConsumer.addNormsField(
         fieldInfo,
         new NormsProducer() {

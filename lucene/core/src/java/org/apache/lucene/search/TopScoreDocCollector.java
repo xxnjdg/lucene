@@ -267,6 +267,7 @@ public abstract class TopScoreDocCollector extends TopDocsCollector<ScoreDoc> {
   }
 
   int docBase;
+  //new ScoreDoc(Integer.MAX_VALUE, Float.NEGATIVE_INFINITY)
   ScoreDoc pqTop;
   final HitsThresholdChecker hitsThresholdChecker;
   final MaxScoreAccumulator minScoreAcc;

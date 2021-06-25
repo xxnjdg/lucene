@@ -48,24 +48,31 @@ public final class SegmentInfo {
   public static final int YES = 1; // e.g. have norms; have deletes;
 
   /** Unique segment name in the directory. */
+  //_0
   public final String name;
 
+  //-1 2
   private int maxDoc; // number of docs in seg
 
   /** Where this segment resides. */
   public final Directory dir;
 
+  //false true
   private boolean isCompoundFile;
 
   /** Id that uniquely identifies this segment. */
+  //随机生成
   private final byte[] id;
 
   private Codec codec;
 
+  //
   private Map<String, String> diagnostics;
 
+  //Lucene90StoredFieldsFormat.mode BEST_SPEED
   private Map<String, String> attributes;
 
+  //null
   private final Sort indexSort;
 
   // Tracks the Lucene version this segment was created with, since 3.1. Null
@@ -73,12 +80,14 @@ public final class SegmentInfo {
   // The format expected is "x.y" - "2.x" for pre-3.0 indexes (or null), and
   // specific versions afterwards ("3.0.0", "3.1.0" etc.).
   // see o.a.l.util.Version.
+  //Version.LATEST
   private final Version version;
 
   // Tracks the minimum version that contributed documents to a segment. For
   // flush segments, that is the version that wrote it. For merged segments,
   // this is the minimum minVersion of all the segments that have been merged
   // into this segment
+  //Version.LATEST
   Version minVersion;
 
   void setDiagnostics(Map<String, String> diagnostics) {

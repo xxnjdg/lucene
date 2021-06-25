@@ -153,6 +153,7 @@ public abstract class IndexReader implements Closeable {
     void onClose(CacheKey key) throws IOException;
   }
 
+  //
   private final Set<IndexReader> parentReaders =
       Collections.synchronizedSet(
           Collections.newSetFromMap(new WeakHashMap<IndexReader, Boolean>()));

@@ -43,13 +43,18 @@ final class Lucene90CompoundReader extends CompoundDirectory {
 
   /** Offset/Length for a slice inside of a compound file */
   public static final class FileEntry {
+    //cfs起始偏移
     long offset;
+    //文件长度
     long length;
   }
 
   private final Directory directory;
+  //段名i在
   private final String segmentName;
+  //key = 文件名
   private final Map<String, FileEntry> entries;
+  //cfs文件
   private final IndexInput handle;
   private int version;
 
@@ -67,6 +72,7 @@ final class Lucene90CompoundReader extends CompoundDirectory {
     this.entries = readEntries(si.getId(), directory, entriesFileName);
     boolean success = false;
 
+    //计算长度
     long expectedLength = CodecUtil.indexHeaderLength(Lucene90CompoundFormat.DATA_CODEC, "");
     for (Map.Entry<String, FileEntry> ent : entries.entrySet()) {
       expectedLength += ent.getValue().length;
@@ -129,16 +135,20 @@ final class Lucene90CompoundReader extends CompoundDirectory {
   }
 
   private Map<String, FileEntry> readMapping(IndexInput entriesStream) throws IOException {
+    //读取文件数
     final int numEntries = entriesStream.readVInt();
     Map<String, FileEntry> mapping = new HashMap<>(numEntries);
     for (int i = 0; i < numEntries; i++) {
       final FileEntry fileEntry = new FileEntry();
+      //文件名
       final String id = entriesStream.readString();
       FileEntry previous = mapping.put(id, fileEntry);
       if (previous != null) {
         throw new CorruptIndexException("Duplicate cfs entry id=" + id + " in CFS ", entriesStream);
       }
+      //cfs起始偏移
       fileEntry.offset = entriesStream.readLong();
+      //文件长度
       fileEntry.length = entriesStream.readLong();
     }
     return mapping;

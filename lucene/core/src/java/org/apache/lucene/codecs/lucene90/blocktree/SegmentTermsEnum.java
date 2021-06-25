@@ -36,32 +36,42 @@ import org.apache.lucene.util.fst.Util;
 final class SegmentTermsEnum extends BaseTermsEnum {
 
   // Lazy init:
+  //tim
   IndexInput in;
 
+  //ord = 0123
   private SegmentTermsEnumFrame[] stack;
   private final SegmentTermsEnumFrame staticFrame;
+  //stack[0]
   SegmentTermsEnumFrame currentFrame;
+  //true
   boolean termExists;
   final FieldReader fr;
 
+  //-1
   private int targetBeforeCurrentLength;
 
   // static boolean DEBUG = BlockTreeTermsWriter.DEBUG;
 
+  //218
   private final ByteArrayDataInput scratchReader = new ByteArrayDataInput();
 
   // What prefix of the current term was present in the index; when we only next() through the
   // index, this stays at 0.  It's only set when
   // we seekCeil/Exact:
+  //0
   private int validIndexPrefix;
 
   // assert only:
   private boolean eof;
 
+  //are
   final BytesRefBuilder term = new BytesRefBuilder();
+  //ReverseRandomAccessReader
   private final FST.BytesReader fstReader;
 
   @SuppressWarnings({"rawtypes", "unchecked"})
+  //arcs[0] = 初始化
   private FST.Arc<BytesRef>[] arcs = new FST.Arc[1];
 
   public SegmentTermsEnum(FieldReader fr) throws IOException {
@@ -320,6 +330,7 @@ final class SegmentTermsEnum extends BaseTermsEnum {
   }
   */
 
+  //target 域值
   @Override
   public boolean seekExact(BytesRef target) throws IOException {
 
@@ -505,6 +516,7 @@ final class SegmentTermsEnum extends BaseTermsEnum {
     // seek'd; now continue walking the index:
     while (targetUpto < target.length) {
 
+      //获取第一个字符
       final int targetLabel = target.bytes[target.offset + targetUpto] & 0xFF;
 
       final FST.Arc<BytesRef> nextArc =

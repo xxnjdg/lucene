@@ -193,6 +193,7 @@ public final class SegmentInfos implements Cloneable, Iterable<SegmentCommitInfo
    *
    * @param files -- array of file names to check
    */
+  //读取最新提交的 Generation
   public static long getLastCommitGeneration(String[] files) {
     long max = -1;
     for (String file : files) {
@@ -288,6 +289,7 @@ public final class SegmentInfos implements Cloneable, Iterable<SegmentCommitInfo
     return readCommit(directory, segmentFileName, Version.MIN_SUPPORTED_MAJOR);
   }
 
+  //读取提交的文件内容
   static final SegmentInfos readCommit(
       Directory directory, String segmentFileName, int minSupportedMajorVersion)
       throws IOException {
@@ -319,6 +321,7 @@ public final class SegmentInfos implements Cloneable, Iterable<SegmentCommitInfo
     try {
       // NOTE: as long as we want to throw indexformattooold (vs corruptindexexception), we need
       // to read the magic ourselves.
+      //读取头部
       int magic = CodecUtil.readBEInt(input);
       if (magic != CodecUtil.CODEC_MAGIC) {
         throw new IndexFormatTooOldException(
@@ -329,6 +332,7 @@ public final class SegmentInfos implements Cloneable, Iterable<SegmentCommitInfo
       input.readBytes(id, 0, id.length);
       CodecUtil.checkIndexHeaderSuffix(input, Long.toString(generation, Character.MAX_RADIX));
 
+      //读取lucene版本
       Version luceneVersion =
           Version.fromBits(input.readVInt(), input.readVInt(), input.readVInt());
       int indexCreatedVersion = input.readVInt();
@@ -360,6 +364,7 @@ public final class SegmentInfos implements Cloneable, Iterable<SegmentCommitInfo
       infos.generation = generation;
       infos.lastGeneration = generation;
       infos.luceneVersion = luceneVersion;
+      //继续解析
       parseSegmentInfos(directory, input, infos, format);
       return infos;
 
@@ -397,11 +402,13 @@ public final class SegmentInfos implements Cloneable, Iterable<SegmentCommitInfo
     }
 
     long totalDocs = 0;
+    //开始解析段
     for (int seg = 0; seg < numSegments; seg++) {
       String segName = input.readString();
       byte[] segmentID = new byte[StringHelper.ID_LENGTH];
       input.readBytes(segmentID, 0, segmentID.length);
       Codec codec = readCodec(input);
+      //读取 SegmentInfo
       SegmentInfo info =
           codec.segmentInfoFormat().read(directory, segName, segmentID, IOContext.READ);
       info.setCodec(codec);
@@ -442,6 +449,7 @@ public final class SegmentInfos implements Cloneable, Iterable<SegmentCommitInfo
       } else {
         sciId = null;
       }
+      //创建 SegmentCommitInfo
       SegmentCommitInfo siPerCommit =
           new SegmentCommitInfo(info, delCount, softDelCount, delGen, fieldInfosGen, dvGen, sciId);
       siPerCommit.setFieldInfosFiles(input.readSetOfStrings());
@@ -543,19 +551,24 @@ public final class SegmentInfos implements Cloneable, Iterable<SegmentCommitInfo
 
   private void write(Directory directory) throws IOException {
 
+    //获取 Generation
     long nextGeneration = getNextPendingGeneration();
     String segmentFileName =
         IndexFileNames.fileNameFromGeneration(IndexFileNames.PENDING_SEGMENTS, "", nextGeneration);
 
     // Always advance the generation on write:
+    //更新下一个 generation
     generation = nextGeneration;
 
     IndexOutput segnOutput = null;
     boolean success = false;
 
     try {
+      //打开文件
       segnOutput = directory.createOutput(segmentFileName, IOContext.DEFAULT);
+      //写入
       write(segnOutput);
+      //flush 文件
       segnOutput.close();
       directory.sync(Collections.singleton(segmentFileName));
       success = true;
@@ -593,6 +606,7 @@ public final class SegmentInfos implements Cloneable, Iterable<SegmentCommitInfo
     out.writeVLong(counter); // write counter
     CodecUtil.writeBEInt(out, size());
 
+    //写入 SegmentCommitInfo
     if (size() > 0) {
 
       Version minSegmentVersion = null;
@@ -612,6 +626,7 @@ public final class SegmentInfos implements Cloneable, Iterable<SegmentCommitInfo
     }
 
     // write infos
+    //写入 SegmentInfo
     for (SegmentCommitInfo siPerCommit : this) {
       SegmentInfo si = siPerCommit.info;
       if (indexCreatedVersionMajor >= 7 && si.minVersion == null) {
@@ -676,6 +691,7 @@ public final class SegmentInfos implements Cloneable, Iterable<SegmentCommitInfo
         out.writeSetOfStrings(e.getValue());
       }
     }
+    //写入用户自定义数据
     out.writeMapOfStrings(userData);
     CodecUtil.writeFooter(out);
   }
@@ -760,6 +776,7 @@ public final class SegmentInfos implements Cloneable, Iterable<SegmentCommitInfo
     }
 
     /** Run {@link #doBody} on the provided commit. */
+    //null
     public T run(IndexCommit commit) throws IOException {
       if (commit != null) {
         if (directory != commit.getDirectory())
@@ -792,6 +809,7 @@ public final class SegmentInfos implements Cloneable, Iterable<SegmentCommitInfo
           // listAll() is weakly consistent, this means we hit "concurrent modification exception"
           continue;
         }
+        //获取 Generation
         gen = getLastCommitGeneration(files);
 
         if (infoStream != null) {
@@ -806,6 +824,7 @@ public final class SegmentInfos implements Cloneable, Iterable<SegmentCommitInfo
               IndexFileNames.fileNameFromGeneration(IndexFileNames.SEGMENTS, "", gen);
 
           try {
+            //通过名字获取数据
             T t = doBody(segmentFileName);
             if (infoStream != null) {
               message("success on " + segmentFileName);
@@ -933,6 +952,7 @@ public final class SegmentInfos implements Cloneable, Iterable<SegmentCommitInfo
       final String src =
           IndexFileNames.fileNameFromGeneration(IndexFileNames.PENDING_SEGMENTS, "", generation);
       dest = IndexFileNames.fileNameFromGeneration(IndexFileNames.SEGMENTS, "", generation);
+      //改名
       dir.rename(src, dest);
       try {
         dir.syncMetaData();

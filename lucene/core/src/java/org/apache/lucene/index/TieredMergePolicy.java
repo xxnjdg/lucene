@@ -263,9 +263,13 @@ public class TieredMergePolicy extends MergePolicy {
 
   private static class SegmentSizeAndDocs {
     private final SegmentCommitInfo segInfo;
+    //段文件总共字节长度
     private final long sizeInBytes;
+    //0
     private final int delCount;
+    //文档数
     private final int maxDoc;
+    //_0 段名字
     private final String name;
 
     SegmentSizeAndDocs(SegmentCommitInfo info, final long sizeInBytes, final int segDelCount)
@@ -334,6 +338,7 @@ public class TieredMergePolicy extends MergePolicy {
     Iterator<SegmentSizeAndDocs> iter = sortedInfos.iterator();
     while (iter.hasNext()) {
       SegmentSizeAndDocs segSizeDocs = iter.next();
+      //段文件总共字节长度
       final long segBytes = segSizeDocs.sizeInBytes;
       if (verbose(mergeContext)) {
         String extra = merging.contains(segSizeDocs.segInfo) ? " [merging]" : "";
@@ -358,17 +363,22 @@ public class TieredMergePolicy extends MergePolicy {
         // only count live docs in the total max doc
         totalMaxDoc += segSizeDocs.maxDoc - segSizeDocs.delCount;
       } else {
+        //
         totalDelDocs += segSizeDocs.delCount;
         totalMaxDoc += segSizeDocs.maxDoc;
       }
 
+      //段文件总共字节长度
       minSegmentBytes = Math.min(segBytes, minSegmentBytes);
+      //段文件总共字节长度
       totIndexBytes += segBytes;
     }
     assert totalMaxDoc >= 0;
     assert totalDelDocs >= 0;
 
+    //0
     final double totalDelPct = 100 * (double) totalDelDocs / totalMaxDoc;
+    //0
     int allowedDelCount = (int) (deletesPctAllowed * totalMaxDoc / 100);
 
     // If we have too-large segments, grace them out of the maximum segment count
@@ -394,9 +404,12 @@ public class TieredMergePolicy extends MergePolicy {
     }
     allowedDelCount = Math.max(0, allowedDelCount);
 
+    //10
     final int mergeFactor = (int) Math.min(maxMergeAtOnce, segsPerTier);
     // Compute max allowed segments in the index
+    //floorSegmentBytes
     long levelSize = Math.max(minSegmentBytes, floorSegmentBytes);
+    //段文件总共字节长度
     long bytesLeft = totIndexBytes;
     double allowedSegCount = 0;
     while (true) {
@@ -411,6 +424,7 @@ public class TieredMergePolicy extends MergePolicy {
     }
     // allowedSegCount may occasionally be less than segsPerTier
     // if segment sizes are below the floor size
+    //10
     allowedSegCount = Math.max(allowedSegCount, segsPerTier);
 
     if (verbose(mergeContext) && tooBigCount > 0) {

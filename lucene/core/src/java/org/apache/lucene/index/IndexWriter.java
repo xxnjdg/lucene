@@ -246,29 +246,39 @@ public class IndexWriter
 
   // when unrecoverable disaster strikes, we populate this with the reason that we had to close
   // IndexWriter
+  //当不可恢复的灾难发生时，我们将不得不关闭的原因填充它
   private final AtomicReference<Throwable> tragedy = new AtomicReference<>(null);
 
+  //索引文件目录
   private final Directory directoryOrig; // original user directory
   private final Directory directory; // wrapped with additional checks
 
   // increments every time a change is completed
+  //每次更改完成时递增
   private final AtomicLong changeCount = new AtomicLong();
+  //最后提交的 changeCount
   private volatile long lastCommitChangeCount; // last changeCount that was committed
 
   // list of segmentInfo we will fallback to if the commit fails
+  //如果提交失败，我们将回退到的 segmentInfo 列表
   private List<SegmentCommitInfo> rollbackSegments;
 
   // set when a commit is pending (after prepareCommit() & before commit())
+  //在提交挂起时设置（在 prepareCommit() 之后 & 在 commit() 之前）
+  //SegmentInfos 写入文件中就会设置这个变量，改完名后重新设置null
   private volatile SegmentInfos pendingCommit;
   private volatile long pendingSeqNo;
   private volatile long pendingCommitChangeCount;
 
   private Collection<String> filesToCommit;
 
+  //newSegment
   private final SegmentInfos segmentInfos;
   final FieldNumbers globalFieldNumberMap;
 
+  //curd
   final DocumentsWriter docWriter;
+  //事件队列 w -> w.deleteNewFiles(files) w -> w.publishFlushedSegments(true)
   private final EventQueue eventQueue = new EventQueue(this);
   private final MergeScheduler.MergeSource mergeSource = new IndexWriterMergeSource(this);
 
@@ -315,6 +325,7 @@ public class IndexWriter
       }
     }
 
+    //处理事件
     private void processEventsInternal() throws IOException {
       assert Integer.MAX_VALUE - permits.availablePermits() > 0
           : "must acquire a permit before processing events";
@@ -351,6 +362,7 @@ public class IndexWriter
   private final IndexFileDeleter deleter;
 
   // used by forceMerge to note those needing merging
+  //forceMerge 用来记录那些需要合并的
   private final Map<SegmentCommitInfo, Boolean> segmentsToMerge = new HashMap<>();
   private int mergeMaxNumSegments;
 
@@ -361,11 +373,14 @@ public class IndexWriter
 
   private final AtomicBoolean maybeMerge = new AtomicBoolean();
 
+  //用户自定义数据
   private Iterable<Map.Entry<String, String>> commitUserData;
 
   // Holds all SegmentInfo instances currently involved in
   // merges
+  //保存当前参与合并的所有 SegmentInfo 实例
   private final HashSet<SegmentCommitInfo> mergingSegments = new HashSet<>();
+  //new ConcurrentMergeScheduler()
   private final MergeScheduler mergeScheduler;
   private final Set<SegmentMerger> runningAddIndexesMerges = new HashSet<>();
   private final Deque<MergePolicy.OneMerge> pendingMerges = new ArrayDeque<>();
@@ -374,11 +389,14 @@ public class IndexWriter
   private long mergeGen;
   private Merges merges = new Merges();
   private boolean didMessageState;
+  //flush 次数
   private final AtomicInteger flushCount = new AtomicInteger();
+  //1
   private final AtomicInteger flushDeletesCount = new AtomicInteger();
   private final ReaderPool readerPool;
   private final BufferedUpdatesStream bufferedUpdatesStream;
 
+  //IndexWriterEventListener.NO_OP_LISTENER
   private final IndexWriterEventListener eventListener;
 
   /**
@@ -528,9 +546,11 @@ public class IndexWriter
     // and to reuse them in the case we wait for merges in this getReader call.
     IOUtils.IOFunction<SegmentCommitInfo, SegmentReader> readerFactory =
         sci -> {
+      //创建 ReadersAndUpdates
           final ReadersAndUpdates rld = getPooledInstance(sci, true);
           try {
             assert Thread.holdsLock(IndexWriter.this);
+            //创建 SegmentReader
             SegmentReader segmentReader = rld.getReadOnlyClone(IOContext.READ);
             // only track this if we actually do fullFlush merges
             if (maxFullFlushMergeWaitMillis > 0) {
@@ -565,13 +585,16 @@ public class IndexWriter
       synchronized (fullFlushLock) {
         try {
           // TODO: should we somehow make the seqNo available in the returned NRT reader?
+          //flush dwpt 的文档
           anyChanges = docWriter.flushAllThreads() < 0;
           if (anyChanges == false) {
             // prevent double increment since docWriter#doFlush increments the flushcount
             // if we flushed anything.
             flushCount.incrementAndGet();
           }
+          //强制发布生成的段
           publishFlushedSegments(true);
+          //处理事件
           processEvents(false);
 
           if (applyAllDeletes) {
@@ -592,6 +615,7 @@ public class IndexWriter
             // Prevent segmentInfos from changing while opening the
             // reader; in theory we could instead do similar retry logic,
             // just like we do when loading segments_N
+            //StandardDirectoryReader
             r =
                 StandardDirectoryReader.open(
                     this, readerFactory, segmentInfos, applyAllDeletes, writeAllDeletes);
@@ -660,6 +684,7 @@ public class IndexWriter
           assert Thread.holdsLock(fullFlushLock);
           docWriter.finishFullFlush(success);
           if (success) {
+            //处理事件
             processEvents(false);
             doAfterFlush();
           } else {
@@ -943,11 +968,15 @@ public class IndexWriter
     eventListener = config.getIndexWriterEventListener();
     // obtain the write.lock. If the user configured a timeout,
     // we wrap with a sleeper and this might take some time.
+    //获取索引目录的索引文件锁
     writeLock = d.obtainLock(WRITE_LOCK_NAME);
 
     boolean success = false;
     try {
       directoryOrig = d;
+      //该流程中我们需要对Directory通过LockValidatingDirectoryWrapper对象进行再次封装，
+      // 使得在对索引目录中的文件进行任意形式的具有"破坏性"（destructive）的文件系统操作（filesystem operation）
+      // 前尽可能（best-effort）确保索引文件锁是有效的（valid）
       directory = new LockValidatingDirectoryWrapper(d, writeLock);
       mergeScheduler = config.getMergeScheduler();
       mergeScheduler.initialize(infoStream, directoryOrig);
@@ -975,6 +1004,7 @@ public class IndexWriter
       IndexCommit commit = config.getIndexCommit();
 
       // Set up our initial SegmentInfos:
+      //获取IndexCommit对应的StandardDirectoryReader
       StandardDirectoryReader reader;
       if (commit == null) {
         reader = null;
@@ -999,8 +1029,10 @@ public class IndexWriter
         // against an index that's currently open for
         // searching.  In this case we write the next
         // segments_N file with no segments:
+        //初始化一个新的SegmentInfos对象
         final SegmentInfos sis = new SegmentInfos(config.getIndexCreatedVersionMajor());
         if (indexExists) {
+          //同步SegmentInfos的部分信息
           final SegmentInfos previous = SegmentInfos.readLatestCommit(directory);
           sis.updateGenerationVersionAndCounter(previous);
         }
@@ -1009,6 +1041,7 @@ public class IndexWriter
 
         // Record that we have a change (zero out all
         // segments) pending:
+        //更新SegmentInfos的version
         changed();
 
       } else if (reader != null) {
@@ -1040,6 +1073,7 @@ public class IndexWriter
 
         // Must clone because we don't want the incoming NRT reader to "see" any changes this writer
         // now makes:
+        //用StandardDirectoryReader初始化一个新的SegmentInfos对象
         segmentInfos = reader.segmentInfos.clone();
 
         SegmentInfos lastCommit;
@@ -1060,6 +1094,7 @@ public class IndexWriter
 
           // In case the old writer wrote further segments (which we are now dropping),
           // update SIS metadata so we remain write-once:
+          //同步SegmentInfos以及回滚信息中SegmentInfos中的部分信息
           segmentInfos.updateGenerationVersionAndCounter(reader.writer.segmentInfos);
           lastCommit.updateGenerationVersionAndCounter(reader.writer.segmentInfos);
         }
@@ -1068,6 +1103,7 @@ public class IndexWriter
       } else {
         // Init from either the latest commit point, or an explicit prior commit point:
 
+        //获取最后提交的 segments_Generation 文件
         String lastSegmentsFile = SegmentInfos.getLastCommitSegmentsFileName(files);
         if (lastSegmentsFile == null) {
           throw new IndexNotFoundException(
@@ -1076,6 +1112,7 @@ public class IndexWriter
 
         // Do not use SegmentInfos.read(Directory) since the spooky
         // retrying it does is not necessary here (we hold the write lock):
+        //从文件读取 segmentInfos
         segmentInfos = SegmentInfos.readCommit(directoryOrig, lastSegmentsFile);
 
         if (commit != null) {
@@ -1092,6 +1129,7 @@ public class IndexWriter
                     + commit.getDirectory());
           }
 
+          //用IndexCommit更新SegmentInfos对象
           SegmentInfos oldInfos =
               SegmentInfos.readCommit(directoryOrig, commit.getSegmentsFileName());
           segmentInfos.replace(oldInfos);
@@ -1106,6 +1144,7 @@ public class IndexWriter
         rollbackSegments = segmentInfos.createBackupSegmentInfos();
       }
 
+      //获取 segmentInfos 自定义用户数据
       commitUserData = new HashMap<>(segmentInfos.getUserData()).entrySet();
 
       pendingNumDocs.set(segmentInfos.totalMaxDoc());
@@ -1115,6 +1154,7 @@ public class IndexWriter
       // un-committed segments:
       globalFieldNumberMap = getFieldNumberMap();
 
+      //检查IndexSort合法性
       validateIndexSort();
 
       config.getFlushPolicy().init(config);
@@ -1148,6 +1188,7 @@ public class IndexWriter
 
       // Sync'd is silly here, but IFD asserts we sync'd on the IW instance:
       synchronized (this) {
+        //生成对象IndexFileDeleter
         deleter =
             new IndexFileDeleter(
                 files,
@@ -2032,6 +2073,7 @@ public class IndexWriter
   }
 
   /** If enabled, information about merges will be printed to this. */
+  //NO_OUTPUT
   private final InfoStream infoStream;
 
   /**
@@ -3841,6 +3883,7 @@ public class IndexWriter
     return docWriter.anyChanges() || bufferedUpdatesStream.any();
   }
 
+  //提交
   private long commitInternal(MergePolicy mergePolicy) throws IOException {
 
     if (infoStream.isEnabled("IW")) {
@@ -3902,6 +3945,7 @@ public class IndexWriter
               infoStream.message("IW", "commit: pendingCommit != null");
             }
 
+            //改名
             committedSegmentsFileName = pendingCommit.finishCommit(directory);
 
             // we committed, if anything goes wrong after this, we are screwed and it's a tragedy:
@@ -3974,6 +4018,7 @@ public class IndexWriter
    *     necessary
    * @param applyAllDeletes whether pending deletes should also
    */
+  //true true
   final void flush(boolean triggerMerge, boolean applyAllDeletes) throws IOException {
 
     // NOTE: this method cannot be sync'd because
@@ -4008,6 +4053,7 @@ public class IndexWriter
       }
       boolean anyChanges;
 
+      //加锁
       synchronized (fullFlushLock) {
         boolean flushSuccess = false;
         try {
@@ -5257,6 +5303,7 @@ public class IndexWriter
    * each file, if it wasn't already. If that succeeds, then we prepare a new segments_N file but do
    * not fully commit it.
    */
+  //开始提交
   private void startCommit(final SegmentInfos toSync) throws IOException {
 
     testPoint("startStartCommit");
@@ -5319,6 +5366,7 @@ public class IndexWriter
           // Exception here means nothing is prepared
           // (this method unwinds everything it did on
           // an exception)
+          //把 SegmentInfos 写入文件中
           toSync.prepareCommit(directory);
           if (infoStream.isEnabled("IW")) {
             infoStream.message(
@@ -5330,6 +5378,7 @@ public class IndexWriter
           }
 
           pendingCommitSet = true;
+          //设置
           pendingCommit = toSync;
         }
 
@@ -5544,6 +5593,7 @@ public class IndexWriter
    * reference such files when this method is called, because they are not allowed within a compound
    * file.
    */
+  //flushNotifications::deleteUnusedFiles
   static void createCompoundFile(
       InfoStream infoStream,
       TrackingDirectoryWrapper directory,
@@ -5563,6 +5613,7 @@ public class IndexWriter
     // Now merge all added files
     boolean success = false;
     try {
+      //合并复合文件cfs cfe
       info.getCodec().compoundFormat().write(directory, info, context);
       success = true;
     } finally {
@@ -5573,6 +5624,7 @@ public class IndexWriter
     }
 
     // Replace all previous files with the CFS/CFE files:
+    //重新设置文件
     info.setFiles(new HashSet<>(directory.getCreatedFiles()));
   }
 
@@ -5584,6 +5636,7 @@ public class IndexWriter
    * @see IndexFileDeleter#deleteNewFiles(Collection)
    */
   private synchronized void deleteNewFiles(Collection<String> files) throws IOException {
+    //删除文件
     deleter.deleteNewFiles(files);
   }
   /** Cleans up residuals from a segment that could not be entirely flushed due to an error */

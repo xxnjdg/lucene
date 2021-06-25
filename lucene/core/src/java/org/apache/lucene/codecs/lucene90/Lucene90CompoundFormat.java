@@ -108,12 +108,15 @@ public final class Lucene90CompoundFormat extends CompoundFormat {
     for (String file : si.files()) {
       // write bytes for file
       long startOffset = data.getFilePointer();
+      //打开文件
       try (ChecksumIndexInput in = dir.openChecksumInput(file, IOContext.READONCE)) {
 
         // just copies the index header, verifying that its id matches what we expect
+        //检查并写入文件头部
         CodecUtil.verifyAndCopyIndexHeader(in, data, si.getId());
 
         // copy all bytes except the footer
+        //拷贝数据
         long numBytesToCopy = in.length() - CodecUtil.footerLength() - in.getFilePointer();
         data.copyBytes(in, numBytesToCopy);
 
@@ -123,6 +126,7 @@ public final class Lucene90CompoundFormat extends CompoundFormat {
         // this is poached from CodecUtil.writeFooter, but we need to use our own checksum, not
         // data.getChecksum(), but I think
         // adding a public method to CodecUtil to do that is somewhat dangerous:
+        //写入尾部
         CodecUtil.writeBEInt(data, CodecUtil.FOOTER_MAGIC);
         CodecUtil.writeBEInt(data, 0);
         CodecUtil.writeBELong(data, checksum);

@@ -29,14 +29,18 @@ public final class FastCharStream implements CharStream {
   // See SOLR-11314
   private static final IOException READ_PAST_EOF = new IOException("Read past EOF.");
 
+  //new char[2048] are
   char[] buffer = null;
 
+  //3
   int bufferLength = 0; // end of valid chars
+  //1 2 3
   int bufferPosition = 0; // next char to read
 
   int tokenStart = 0; // offset in buffer
   int bufferStart = 0; // position in file of buffer
 
+  //字符串元数据
   Reader input; // source of chars
 
   /** Constructs from a Reader. */
@@ -51,6 +55,7 @@ public final class FastCharStream implements CharStream {
   }
 
   private void refill() throws IOException {
+    //0
     int newPosition = bufferLength - tokenStart;
 
     if (tokenStart == 0) { // token won't fit in buffer

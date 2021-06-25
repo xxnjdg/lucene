@@ -39,15 +39,21 @@ public class LiveIndexWriterConfig {
 
   private final Analyzer analyzer;
 
+  //MaxBufferedDocs则是描述了索引信息被写入到磁盘前暂时缓存在内存中允许的文档最大数量
   private volatile int maxBufferedDocs;
+  //RAMBufferSizeMB描述了索引信息被写入到磁盘前暂时缓存在内存中允许的最大使用内存值
   private volatile double ramBufferSizeMB;
+  //预热合并后的新段，它描述的是在执行段的合并期间，提前获得合并后生成的新段的信息，由于段的合并和文档的增删改是并发操作，所以使用该配置可以提高性能
   private volatile IndexReaderWarmer mergedSegmentWarmer;
 
   // modified by IndexWriterConfig
   /** {@link IndexDeletionPolicy} controlling when commit points are deleted. */
+  //IndexDeletionPolicy是索引删除策略，该策略用来描述当一个新的提交生成后，如何处理上一个提交
   protected volatile IndexDeletionPolicy delPolicy;
 
   /** {@link IndexCommit} that {@link IndexWriter} is opened on. */
+  //执行一次提交操作（执行commit方法）后，这次提交包含的所有的段的信息用IndexCommit来描述，其
+  // 中至少包含了两个信息，分别是segment_N文件跟Directory
   protected volatile IndexCommit commit;
 
   /** {@link OpenMode} that {@link IndexWriter} is opened with. */
@@ -57,24 +63,32 @@ public class LiveIndexWriterConfig {
   protected int createdVersionMajor = Version.LATEST.major;
 
   /** {@link Similarity} to use when encoding norms. */
+  //Similarity描述了Lucene打分的组成部分
   protected volatile Similarity similarity;
 
   /** {@link MergeScheduler} to use for running merges. */
+  //MergeScheduler即段的合并调度策略，用来定义如何执行一个或多个段的合并，比如并发执行多个段的合并任务时的执行先后顺序，磁盘IO限制
   protected volatile MergeScheduler mergeScheduler;
 
   /** {@link Codec} used to write new segments. */
+  //Codec定义了索引文件的数据结构，即描述了每一种索引文件需要记录哪些信息，以及如何存储这些信息
+  //org.apache.lucene.codecs.lucene90.Lucene90Codec
   protected volatile Codec codec;
 
   /** {@link InfoStream} for debugging messages. */
+  //InfoStream用来在对Lucene进行调试时实现debug输出信息，在业务中打印debug信息会降低Lucene的性能，故在业务中使用默认值就行，即不输出debug信息
   protected volatile InfoStream infoStream;
 
   /** {@link MergePolicy} for selecting merges. */
+  //MergePolicy是段的合并策略，它用来描述如何从索引目录中找到满足合并要求的段集合（segment set）
   protected volatile MergePolicy mergePolicy;
 
   /** True if readers should be pooled. */
+  //ReaderPooling该值是一个布尔值，用来描述是否允许共用（pool）SegmentReader，共用（pool）可以理解为缓存
   protected volatile boolean readerPooling;
 
   /** {@link FlushPolicy} to control when segments are flushed. */
+  //FlushPolicy即flush策略，准确的说应该称为 自动flush策略，因为flush分为自动flush跟主动flush
   protected volatile FlushPolicy flushPolicy;
 
   /**
@@ -84,12 +98,15 @@ public class LiveIndexWriterConfig {
   protected volatile int perThreadHardLimitMB;
 
   /** True if segment flushes should use compound file format */
+  //当该值为true，那么通过flush、commit的操作生成索引使用的数据结构都是复合索引文件，即索引文件.cfs、.cfe
   protected volatile boolean useCompoundFile = IndexWriterConfig.DEFAULT_USE_COMPOUND_FILE_SYSTEM;
 
   /** True if calls to {@link IndexWriter#close()} should first do a commit. */
+  //它会影响IndexWriter.close()的执行逻辑，如果设置为true，那么会先应用（apply）所有的更改，即执行commit操作，否则上一次commit操作后的所有更改都不会保存，直接退出
   protected boolean commitOnClose = IndexWriterConfig.DEFAULT_COMMIT_ON_CLOSE;
 
   /** The sort order to use to write merged segments. */
+  //IndexSort描述了在索引阶段如何对segment内的文档进行排序
   protected Sort indexSort = null;
 
   /** The comparator for sorting leaf readers. */
@@ -105,6 +122,7 @@ public class LiveIndexWriterConfig {
   protected volatile boolean checkPendingFlushOnUpdate = true;
 
   /** soft deletes field */
+  //SoftDeletesField用来定义哪些域为软删除的域
   protected String softDeletesField = null;
 
   /** Amount of time to wait for merges returned by MergePolicy.findFullFlushMerges(...) */

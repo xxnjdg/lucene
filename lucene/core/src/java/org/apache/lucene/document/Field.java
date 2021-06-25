@@ -533,6 +533,7 @@ public class Field implements IndexableField {
     private final CharTermAttribute termAttribute = addAttribute(CharTermAttribute.class);
     private final OffsetAttribute offsetAttribute = addAttribute(OffsetAttribute.class);
     private boolean used = true;
+    //docvalue
     private String value = null;
 
     /**

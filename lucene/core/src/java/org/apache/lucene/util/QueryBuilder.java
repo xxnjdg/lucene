@@ -57,6 +57,7 @@ import org.apache.lucene.util.graph.GraphTokenStreamFiniteStrings;
  * queries can be customized.
  */
 public class QueryBuilder {
+  //分词器
   protected Analyzer analyzer;
   protected boolean enablePositionIncrements = true;
   protected boolean enableGraphQueries = true;

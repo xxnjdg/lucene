@@ -94,8 +94,11 @@ public abstract class PerFieldPostingsFormat extends PostingsFormat {
     }
 
     static class Builder {
+      //域名数组
       final Set<String> fields;
+      //id
       final int suffix;
+      //多加了个 segmentSuffix
       final SegmentWriteState state;
 
       Builder(int suffix, SegmentWriteState state) {
@@ -147,6 +150,7 @@ public abstract class PerFieldPostingsFormat extends PostingsFormat {
 
     @Override
     public void write(Fields fields, NormsProducer norms) throws IOException {
+      //构建
       Map<PostingsFormat, FieldsGroup> formatToGroups = buildFieldsGroupMapping(fields);
 
       // Write postings
@@ -165,8 +169,10 @@ public abstract class PerFieldPostingsFormat extends PostingsFormat {
                 }
               };
 
+          //org.apache.lucene.codecs.lucene90.Lucene90PostingsFormat.fieldsConsumer
           FieldsConsumer consumer = format.fieldsConsumer(group.state);
           toClose.add(consumer);
+          //org.apache.lucene.codecs.lucene90.blocktree.Lucene90BlockTreeTermsWriter.write
           consumer.write(maskedFields, norms);
         }
         success = true;
@@ -220,8 +226,10 @@ public abstract class PerFieldPostingsFormat extends PostingsFormat {
 
       // Assign field -> PostingsFormat
       for (String field : indexedFieldNames) {
+        //获取 FieldInfo
         FieldInfo fieldInfo = writeState.fieldInfos.fieldInfo(field);
         // TODO: This should check current format from the field attribute?
+        //D:\a\xxnjdg-lucene\lucene\lucene\core\src\java\org\apache\lucene\codecs\lucene90\Lucene90PostingsFormat.java
         final PostingsFormat format = getPostingsFormatForField(field);
 
         if (format == null) {
@@ -231,6 +239,7 @@ public abstract class PerFieldPostingsFormat extends PostingsFormat {
         String formatName = format.getName();
 
         FieldsGroup.Builder groupBuilder = formatToGroupBuilders.get(format);
+        //如果没有就创建
         if (groupBuilder == null) {
           // First time we are seeing this format; create a new instance
 
@@ -241,8 +250,10 @@ public abstract class PerFieldPostingsFormat extends PostingsFormat {
           } else {
             suffix = suffix + 1;
           }
+          //
           suffixes.put(formatName, suffix);
 
+          //构建 segmentSuffix = formatName + suffix
           String segmentSuffix =
               getFullSegmentSuffix(
                   field, writeState.segmentSuffix, getSuffix(formatName, Integer.toString(suffix)));
@@ -257,8 +268,10 @@ public abstract class PerFieldPostingsFormat extends PostingsFormat {
           }
         }
 
+        //加速域名
         groupBuilder.addField(field);
 
+        //加属性
         fieldInfo.putAttribute(PER_FIELD_FORMAT_KEY, formatName);
         fieldInfo.putAttribute(PER_FIELD_SUFFIX_KEY, Integer.toString(groupBuilder.suffix));
       }
@@ -280,6 +293,7 @@ public abstract class PerFieldPostingsFormat extends PostingsFormat {
 
     private final Map<String, FieldsProducer> fields = new TreeMap<>();
     private final Map<String, FieldsProducer> formats = new HashMap<>();
+    //段名字
     private final String segment;
 
     // clone for merge

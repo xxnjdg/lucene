@@ -230,6 +230,7 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
   // private final static boolean SAVE_DOT_FILES = false;
 
   private final IndexOutput metaOut;
+  //tim
   private final IndexOutput termsOut;
   private final IndexOutput indexOut;
   final int maxDoc;
@@ -342,19 +343,23 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
     // if (DEBUG) System.out.println("\nBTTW.write seg=" + segment);
 
     String lastField = null;
+    //遍历域名
     for (String field : fields) {
       assert lastField == null || lastField.compareTo(field) < 0;
       lastField = field;
 
       // if (DEBUG) System.out.println("\nBTTW.write seg=" + segment + " field=" + field);
+      //new FreqProxTerms(perField)
       Terms terms = fields.terms(field);
       if (terms == null) {
         continue;
       }
 
+      //FreqProxTermsEnum termsEnum = new FreqProxTermsEnum(terms);
       TermsEnum termsEnum = terms.iterator();
       TermsWriter termsWriter = new TermsWriter(fieldInfos.fieldInfo(field));
       while (true) {
+        //获取 term 元素
         BytesRef term = termsEnum.next();
         // if (DEBUG) System.out.println("BTTW: next term " + term);
 
@@ -364,9 +369,11 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
 
         // if (DEBUG) System.out.println("write field=" + fieldInfo.name + " term=" +
         // brToString(term));
+        //主要写入 doc pos 等文件
         termsWriter.write(term, termsEnum, norms);
       }
 
+      //主要写入tip tim 元数据文件
       termsWriter.finish();
 
       // if (DEBUG) System.out.println("\nBTTW.write done seg=" + segment + " field=" + field);
@@ -389,6 +396,7 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
   }
 
   private static final class PendingTerm extends PendingEntry {
+    //存term值
     public final byte[] termBytes;
     // stats + metadata
     public final BlockTermState state;
@@ -491,6 +499,7 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
       }
 
       final ByteSequenceOutputs outputs = ByteSequenceOutputs.getSingleton();
+      //初始化 FSTCompiler
       final FSTCompiler<BytesRef> fstCompiler =
           new FSTCompiler.Builder<>(FST.INPUT_TYPE.BYTE1, outputs)
               .shouldShareNonSingletonNodes(false)
@@ -514,6 +523,7 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
         }
       }
 
+      //初始化
       index = fstCompiler.compile();
 
       assert subIndices == null;
@@ -583,6 +593,7 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
 
   class TermsWriter {
     private final FieldInfo fieldInfo;
+    //处理成功的term数
     private long numTerms;
     final FixedBitSet docsSeen;
     long sumTotalTermFreq;
@@ -593,6 +604,7 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
     // startsByPrefix[0] is the index into pending for the first
     // term/sub-block starting with 't'.  We use this to figure out when
     // to write a new block:
+    //存term域值字符串
     private final BytesRefBuilder lastTerm = new BytesRefBuilder();
     private int[] prefixStarts = new int[8];
 
@@ -600,6 +612,7 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
     // we append to this stack, and once the top of the stack has enough
     // terms starting with a common prefix, we write a new block with
     // those terms and replace those terms in the stack with a new block:
+    //PendingTerm 数组，write后会加紧这个数组中
     private final List<PendingEntry> pending = new ArrayList<>();
 
     // Reused in writeBlocks:
@@ -638,10 +651,13 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
 
       for (int i = start; i < end; i++) {
 
+        //获取 PendingEntry
         PendingEntry ent = pending.get(i);
 
         int suffixLeadLabel;
 
+        //判断 ent 是 PendingTerm 还是 PendingBlock
+        //为true是PendingTerm
         if (ent.isTerm) {
           PendingTerm term = (PendingTerm) ent;
           if (term.termBytes.length == prefixLength) {
@@ -706,6 +722,7 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
         int itemsInBlock = end - nextBlockStart;
         boolean isFloor = itemsInBlock < count;
         newBlocks.add(
+                //
             writeBlock(
                 prefixLength,
                 isFloor,
@@ -718,6 +735,7 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
 
       assert newBlocks.isEmpty() == false;
 
+      //获取 PendingBlock
       PendingBlock firstBlock = newBlocks.get(0);
 
       assert firstBlock.isFloor || newBlocks.size() == 1;
@@ -781,6 +799,7 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
         // Last block:
         code |= 1;
       }
+      //
       termsOut.writeVInt(code);
 
       /*
@@ -811,6 +830,7 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
           PendingEntry ent = pending.get(i);
           assert ent.isTerm : "i=" + i;
 
+          //遍历
           PendingTerm term = (PendingTerm) ent;
 
           assert StringHelper.startsWith(term.termBytes, prefix) : term + " prefix=" + prefix;
@@ -824,14 +844,18 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
           // }
 
           // For leaf block we write suffix straight
+          //记录term 长度
           suffixLengthsWriter.writeVInt(suffix);
+          //记录term
           suffixWriter.append(term.termBytes, prefixLength, suffix);
           assert floorLeadLabel == -1 || (term.termBytes[prefixLength] & 0xff) >= floorLeadLabel;
 
           // Write term stats, to separate byte[] blob:
+          //记录 在文档出现次数 term 总词频
           statsWriter.add(state.docFreq, state.totalTermFreq);
 
           // Write term meta data
+          //记录term元数据，即记录文档号和位置文件偏移值
           postingsWriter.encodeTerm(metaWriter, fieldInfo, state, absolute);
           absolute = false;
         }
@@ -958,7 +982,9 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
         token |= 0x04;
       }
       token |= compressionAlg.code;
+      //
       termsOut.writeVLong(token);
+      //把上面解析到的数据写入到tim
       if (compressionAlg == CompressionAlgorithm.NO_COMPRESSION) {
         termsOut.writeBytes(suffixWriter.bytes(), suffixWriter.length());
       } else {
@@ -1115,6 +1141,7 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
         ByteBuffersDataOutput metaOut = new ByteBuffersDataOutput();
         fields.add(metaOut);
 
+        //写入一堆元数据
         metaOut.writeVInt(fieldInfo.number);
         metaOut.writeVLong(numTerms);
         metaOut.writeVInt(rootCode.length);
@@ -1171,6 +1198,7 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
 
     boolean success = false;
     try {
+      //写入tmd 数据
       metaOut.writeVInt(fields.size());
       for (ByteBuffersDataOutput fieldMeta : fields) {
         fieldMeta.copyTo(metaOut);

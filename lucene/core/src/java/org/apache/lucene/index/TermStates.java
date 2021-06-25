@@ -37,9 +37,12 @@ public final class TermStates {
 
   // Important: do NOT keep hard references to index readers
   private final Object topReaderContextIdentity;
+  //[0] = 初始化
   private final TermState[] states;
   private final Term term; // null if stats are to be used
+  //2
   private int docFreq;
+  //3
   private long totalTermFreq;
 
   // public static boolean DEBUG = BlockTreeTermsWriter.DEBUG;
@@ -112,8 +115,10 @@ public final class TermStates {
   }
 
   private static TermsEnum loadTermsEnum(LeafReaderContext ctx, Term term) throws IOException {
+    //FieldReader
     final Terms terms = ctx.reader().terms(term.field());
     if (terms != null) {
+      //SegmentTermsEnum
       final TermsEnum termsEnum = terms.iterator();
       if (termsEnum.seekExact(term.bytes())) {
         return termsEnum;

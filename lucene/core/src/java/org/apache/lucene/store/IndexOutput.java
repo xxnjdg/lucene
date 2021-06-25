@@ -36,6 +36,7 @@ public abstract class IndexOutput extends DataOutput implements Closeable {
   private final String resourceDescription;
 
   /** Just the name part from {@code resourceDescription} */
+  //_0.fdm
   private final String name;
 
   /**
